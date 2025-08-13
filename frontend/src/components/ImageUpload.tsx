@@ -227,10 +227,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         <ul className="text-sm text-gray-700 space-y-2">
           <li className="flex items-start">
             <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>For best results, use high-resolution microscope images (minimum 1024x1024 pixels)</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
             <span>Ensure images are well-focused with clear contrast between tumor and normal tissue</span>
           </li>
           <li className="flex items-start">

@@ -86,7 +86,7 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Secure & Reliable</h3>
               <p className="text-gray-600 leading-relaxed">
-                HIPAA-compliant processing with secure data handling and automatic file cleanup.
+                Secure data handling and automatic file cleanup.
               </p>
             </div>
           </div>

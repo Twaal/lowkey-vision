@@ -24,7 +24,7 @@ const Navbar = () => {
             <div className="p-2 bg-teal-600 rounded-lg group-hover:bg-teal-700 transition-colors duration-200">
               <Eye className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Low-Key Vision</span>
+            <span className="text-xl font-bold text-gray-900">LKv</span>
           </Link>
 
           {/* Desktop Navigation */}
