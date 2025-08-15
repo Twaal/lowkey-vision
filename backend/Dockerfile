@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir torch torchvision --index-url https://download.py
     pip install --no-cache-dir -r requirements.txt
 
 # Copy model weights and code
-COPY models/checkpoints/unet_model_7_2_epoch44.pth /app/models/checkpoints/
+COPY models/checkpoints/*.pth /app/models/checkpoints/
 COPY . .
 
 # Expose the port

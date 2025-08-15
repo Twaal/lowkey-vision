@@ -6,10 +6,10 @@ import numpy as np
 # import imageio
 import cv2
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
-from inference_unet import predict_mask
+from inference_unet import predict
+from functools import lru_cache
 
 
 HOST = "0.0.0.0"
@@ -26,23 +26,30 @@ app.add_middleware(
 )
 start_time = time.time()
 
+# Cache predictions for 5 seconds to prevent duplicate processing
+@lru_cache(maxsize=10)
+def cached_predict(image_bytes: bytes, timestamp: int) -> np.ndarray:
+    # Convert bytes to numpy array
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return predict(img)
+
 
 @app.post("/predict")
 async def predict_tumor(file: UploadFile = File(...)):
+    # Read image
     contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
-    if img is None:
-        return {"error": "Invalid image"}
+    # Cache based on image contents and 5-second time window
+    timestamp = int(time.time()) // 5
+    mask = cached_predict(contents, timestamp)
     
-    try:
-        mask = predict_mask(img)
-        _, img_encoded = cv2.imencode('.png', mask)
-        return Response(content=img_encoded.tobytes(), media_type="image/png")
-    except Exception as e:
-        print(f"Inference error: {str(e)}")
-        return {"error": "Inference failed"}
+    # Convert mask to bytes
+    success, encoded_img = cv2.imencode('.png', mask)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to encode image")
+    
+    return Response(content=encoded_img.tobytes(), media_type="image/png")
 
 
 @app.get('/api')

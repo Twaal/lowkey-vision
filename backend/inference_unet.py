@@ -1,102 +1,74 @@
 import torch
 import numpy as np
 import cv2
-import os
-import time
 from unet_model import get_unet_model
 
-# Initialize model (CPU only)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
+print(f"Inference device: {device}")
 model = get_unet_model(in_channels=1, out_classes=1)
 
-# Load weights
-model_path = "models/checkpoints/unet_model_7_2_epoch45.pth"
-if not os.path.exists(model_path):
-    raise FileNotFoundError(f"Model weights not found at {model_path}")
-
-# Load weights with verification
-print("Loading checkpoint from:", model_path)
-checkpoint = torch.load(model_path, map_location=device)
-print("\nCheckpoint contents:", checkpoint.keys())
-
-# Verify model state before loading weights
-# print("\nInitial model parameters:")
-# for name, param in model.named_parameters():
-#     print(f"{name}: mean={param.mean().item():.3f}, std={param.std().item():.3f}")
-
-# Load checkpoint and extract model state dict
+checkpoint = torch.load("models/checkpoints/unet_model_7_2_epoch44.pth", map_location=device)
 model.load_state_dict(checkpoint['model_state_dict'])
 
-# Verify model state after loading weights
-print("\nModel parameters after loading:")
-for name, param in model.named_parameters():
-    print(f"{name}: mean={param.mean().item():.3f}, std={param.std().item():.3f}")
+# model.load_state_dict(torch.load("tumor-segmentation/models/checkpoints/unet_model_7_1_epoch1.pth", map_location=device, weights_only=True))
+model.to(device)
+model.eval()
 
-model.eval()  # Make sure it's in eval mode
-print("Model mode after eval():", model.training)
+def preprocess(img: np.ndarray, resize_shape=(512, 512)) -> torch.Tensor:
+    # Convert to grayscale (if input is color)
+    if img.ndim == 3 and img.shape[2] == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = img.astype(np.float32)
 
-def predict_mask(image: np.ndarray) -> np.ndarray:
-    # Clear CUDA cache if available
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-    
-    # Force model to eval mode for each prediction
-    model.eval()
-    
-    # Generate unique debug directory for each run
-    timestamp = int(time.time())
-    debug_dir = f"debug_images/run_{timestamp}"
-    os.makedirs(debug_dir, exist_ok=True)
+    # # Log transform to compress dynamic range
+    # img = np.log1p(img)
 
-    # Debug: Print input image shape and save original
-    print(f"Input image shape: {image.shape}")
-    cv2.imwrite(os.path.join(debug_dir, "1_input_image.png"), image)
+    # # Z-score normalization
+    # img = (img - img.mean()) / (img.std() + 1e-5)
+
+    # Resize if specified
+    if resize_shape:
+        target_h, target_w = resize_shape
+        img = cv2.resize(img, (target_h, target_w), interpolation=cv2.INTER_AREA)
+
+    # Add channel and batch dims: (1, 1, H, W)
+    img = np.expand_dims(img, axis=0)
+    img = np.expand_dims(img, axis=0)
+
+    tensor = torch.tensor(img, dtype=torch.float32).to(device)
+    return tensor
+
+def postprocess(pred: torch.Tensor, target_size: tuple) -> np.ndarray:
+    # Get prediction mask
+    pred_np = pred.squeeze().cpu().numpy()
     
-    # Preprocess and save each step
-    img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite(os.path.join(debug_dir, "2_grayscale.png"), img)
+    # Resize to original image size
+    pred_resized = cv2.resize(pred_np, (target_size[1], target_size[0]), interpolation=cv2.INTER_LINEAR)
     
-    img = cv2.resize(img, (512, 512))
-    cv2.imwrite(os.path.join(debug_dir, "3_resized.png"), img)
+    # Create binary mask
+    binary_mask = (pred_resized > 0.5).astype(np.uint8)
     
-    img = img / 255.0
-    img_normalized = (img * 255).astype(np.uint8)  # For visualization
-    cv2.imwrite(os.path.join(debug_dir, "4_normalized.png"), img_normalized)
+    # Clean up small artifacts
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(binary_mask, connectivity=8)
+    min_size = 5
+    cleaned_mask = np.zeros_like(binary_mask)
     
-    img = torch.from_numpy(img).float()
-    img = img.unsqueeze(0).unsqueeze(0)  # Add batch and channel dims
-    print(f"Model input tensor shape: {img.shape}")
+    # Keep only significant regions
+    for i in range(1, num_labels):
+        if stats[i, cv2.CC_STAT_AREA] >= min_size:
+            cleaned_mask[labels == i] = 1
     
-    # Add input normalization check
-    print(f"Input value range: {img.min():.3f} to {img.max():.3f}")
+    # Create RGB mask with red for tumor regions
+    mask_rgb = np.zeros((target_size[0], target_size[1], 3), dtype=np.uint8)
+    mask_rgb[cleaned_mask == 1] = [0, 0, 255]  # Red color for tumor regions
     
-    # Inference with value debugging
+    return mask_rgb
+
+
+def predict(img: np.ndarray) -> np.ndarray:
+    original_size = img.shape[:2]  # (height, width)
+    input_tensor = preprocess(img)
     with torch.no_grad():
-        pred = model(img)
-        print(f"Raw prediction shape: {pred.shape}")
-        print(f"Raw prediction range: {pred.min().item():.3f} to {pred.max().item():.3f}")
-        
-        # Add histogram of predictions
-        pred_np = pred.squeeze().numpy()
-        hist, bins = np.histogram(pred_np, bins=20)
-        # print("Prediction histogram:")
-        # for i in range(len(hist)):
-        #     print(f"  {bins[i]:.2f} to {bins[i+1]:.2f}: {hist[i]}")
-            
-        pred = torch.sigmoid(pred)
-        print(f"After sigmoid range: {pred.min().item():.3f} to {pred.max().item():.3f}")
-        
-        mask = (pred > 0.5).float()
-        print(f"After threshold range: {mask.min().item():.3f} to {mask.max().item():.3f}")
-    
-    # Postprocess with value checks
-    mask = mask.squeeze().numpy()
-    print(f"Numpy mask range: {mask.min():.3f} to {mask.max():.3f}")
-    
-    mask = (mask * 255).astype(np.uint8)
-    cv2.imwrite(os.path.join(debug_dir, "5_raw_mask.png"), mask)
-    
-    mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
-    cv2.imwrite(os.path.join(debug_dir, "6_final_mask.png"), mask)
-    
-    return mask
+        output = model(input_tensor)
+    return postprocess(output, original_size)

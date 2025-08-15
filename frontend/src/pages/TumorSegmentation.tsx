@@ -1,23 +1,27 @@
 import React, { useState } from 'react';
 import ImageUpload from '../components/ImageUpload';
+import ResultsVisualization from '../components/ResultsVisualization';
 
 const TumorSegmentation: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasResult, setHasResult] = useState(false);
   const [maskUrl, setMaskUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<File | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   const handleAnalyze = async (imageFile: File) => {
     setIsAnalyzing(true);
     setError(null);
+    setCurrentImage(imageFile);
     
     try {
-      // Debug: Create an Image object to get dimensions
+      // Get image dimensions
       const img = new Image();
       img.src = URL.createObjectURL(imageFile);
       await new Promise((resolve) => {
         img.onload = () => {
-          console.log('Original image dimensions:', {
+          setImageDimensions({
             width: img.width,
             height: img.height
           });
@@ -72,6 +76,8 @@ const TumorSegmentation: React.FC = () => {
     setHasResult(false);
     setMaskUrl(null);
     setError(null);
+    setCurrentImage(null);
+    setImageDimensions(null);
   };
 
   return (
@@ -91,13 +97,26 @@ const TumorSegmentation: React.FC = () => {
         </div>
       )}
       
-      {maskUrl && hasResult && (
+      {maskUrl && hasResult && currentImage && imageDimensions && (
         <div className="mt-8">
           <h4 className="font-medium text-lg mb-4">Analysis Result</h4>
           <div className="bg-white p-4 rounded-lg shadow">
-            <img 
-              src={maskUrl} 
-              alt="Segmentation Result" 
+            <ResultsVisualization
+              result={{
+                originalImage: URL.createObjectURL(currentImage),
+                segmentationMask: maskUrl,
+                statistics: {
+                  imageResolution: `${imageDimensions.width}x${imageDimensions.height}`,
+                  totalTumorArea: 0,
+                  tumorAreaPercentage: 0,
+                  numberOfRegions: 0,
+                  meanRegionSize: 0,
+                  largestRegionSize: 0,
+                  smallestRegionSize: 0,
+                  analysisDate: new Date().toISOString()
+                }
+              }}
+              isLoading={false}
               className="w-full object-contain max-h-96"
             />
           </div>
