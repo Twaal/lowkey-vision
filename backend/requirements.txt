@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+python-multipart
+numpy
+pillow
+opencv-python-headless
+pydantic
+imageio
+timm
+efficientnet-pytorch
+segmentation-models-pytorch
+albumentations
+six
+torch
+torchvision

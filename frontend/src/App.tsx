@@ -6,7 +6,7 @@ import TumorSegmentation from './pages/TumorSegmentation';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 
-function App() {
+const App: React.FC = () => {
   return (
     <Router>
       <div className="min-h-screen bg-white">
@@ -20,6 +20,6 @@ function App() {
       </div>
     </Router>
   );
-}
+};
 
 export default App;

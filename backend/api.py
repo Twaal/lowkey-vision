@@ -3,14 +3,13 @@ import time
 import datetime
 import os
 import numpy as np
-import imageio
+# import imageio
+import cv2
 
-from fastapi import Body, FastAPI
-from dtos import TumorPredictRequestDto, TumorPredictResponseDto
-# from example import predict
-# from inference_mrcnn import predict
-from inference_unet import predict
-from utils import validate_segmentation, encode_request, decode_request
+from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from inference_unet import predict_mask
 
 
 HOST = "0.0.0.0"
@@ -18,43 +17,38 @@ PORT = 8000
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 start_time = time.time()
 
 
-@app.post('/predict', response_model=TumorPredictResponseDto)
-def predict_endpoint(request: TumorPredictRequestDto):
-    # Decode request str to numpy array
-    img: np.ndarray = decode_request(request)
-
-    # Save image locally
-    save_dir = "received_images"
-    os.makedirs(save_dir, exist_ok=True)
-
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    filename = f"image_{timestamp}.png"
-    image_path = os.path.join(save_dir, filename)
-    # imageio.imwrite(image_path, img)
-
-    # Obtain segmentation prediction
-    predicted_segmentation = predict(img)
-
-    # Validate segmentation format
-    validate_segmentation(img, predicted_segmentation)
-
-    # Encode the segmentation array to a str
-    encoded_segmentation = encode_request(predicted_segmentation)
-
-    # Return the encoded segmentation to the validation/evalution service
-    response = TumorPredictResponseDto(
-        img=encoded_segmentation
-    )
-    return response
+@app.post("/predict")
+async def predict_tumor(file: UploadFile = File(...)):
+    contents = await file.read()
+    nparr = np.frombuffer(contents, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    
+    if img is None:
+        return {"error": "Invalid image"}
+    
+    try:
+        mask = predict_mask(img)
+        _, img_encoded = cv2.imencode('.png', mask)
+        return Response(content=img_encoded.tobytes(), media_type="image/png")
+    except Exception as e:
+        print(f"Inference error: {str(e)}")
+        return {"error": "Inference failed"}
 
 
 @app.get('/api')
 def hello():
     return {
-        "service": "race-car-usecase",
+        "service": "tumor-segmentation",
         "uptime": '{}'.format(datetime.timedelta(seconds=time.time() - start_time))
     }
 
@@ -69,5 +63,5 @@ if __name__ == '__main__':
         'api:app',
         host=HOST,
         port=PORT,
-        reload=True
+        reload=False
     )

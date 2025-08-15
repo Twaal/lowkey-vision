@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ImageUploadProps {
@@ -6,18 +6,21 @@ interface ImageUploadProps {
   isAnalyzing: boolean;
   onReset: () => void;
   hasResult: boolean;
+  onMaskUpdate: (maskUrl: string) => void;  // New prop for updating mask
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   onAnalyze,
   isAnalyzing,
   onReset,
-  hasResult
+  hasResult,
+  onMaskUpdate  // Add new prop
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [maskUrl, setMaskUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): string | null => {
@@ -75,9 +78,34 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
-  const handleAnalyze = () => {
-    if (selectedFile) {
-      onAnalyze(selectedFile);
+  const handleAnalyze = async () => {
+    if (!selectedFile) return;
+    
+    onAnalyze(selectedFile);  // Call this first to set loading state
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      console.log('Sending request to backend...'); 
+      
+      const response = await fetch('http://localhost:8000/predict', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Inference failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setMaskUrl(url);
+      onMaskUpdate(url);  // This should now work
+      
+    } catch (err) {
+      console.error('Error during analysis:', err);
+      setError('Failed to analyze image');
     }
   };
 
@@ -85,6 +113,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     setSelectedFile(null);
     setPreviewUrl(null);
     setError(null);
+    setMaskUrl(null);
     onReset();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -95,6 +124,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     setSelectedFile(null);
     setPreviewUrl(null);
     setError(null);
+    setMaskUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -193,7 +223,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         {selectedFile && !hasResult && (
           <button
             onClick={handleAnalyze}
-            disabled={isAnalyzing || !!error}
+            disabled={isAnalyzing}
             className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
           >
             {isAnalyzing ? (
@@ -235,6 +265,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </li>
         </ul>
       </div>
+
+      {/* Segmentation Result */}
+      {hasResult && maskUrl && (
+        <div className="mt-4">
+          <h4 className="font-medium mb-2">Segmentation Result</h4>
+          <div className="relative">
+            <img 
+              src={previewUrl} 
+              alt="Original" 
+              className="w-full h-64 object-contain"
+            />
+            <img
+              src={maskUrl}
+              alt="Mask"
+              className="absolute top-0 left-0 w-full h-64 object-contain opacity-50"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
