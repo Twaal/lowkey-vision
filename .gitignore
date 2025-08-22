@@ -7,12 +7,21 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 models/
+cell-counter/checkpoints/
 *.pth
 node_modules
 dist
 dist-ssr
 *.local
-
+*.tar.gz
+*.pyc
+/.ipynb_checkpoints
+*.zip
+*.out*
+ckpt*
+*.pb
+/.idea
+*.bat
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

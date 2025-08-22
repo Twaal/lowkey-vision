@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 import cv2
-import os
 from unet_model import get_unet_model
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

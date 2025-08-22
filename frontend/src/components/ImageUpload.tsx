@@ -1,37 +1,24 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ImageUploadProps {
-  onAnalyze: (file: File) => void;
+  onAnalyze: (file: File) => Promise<void>;
   isAnalyzing: boolean;
   onReset: () => void;
   hasResult: boolean;
-  onMaskUpdate: (url: string | null) => void;
-  defaultImage: File | null;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   onAnalyze,
   isAnalyzing,
   onReset,
-  hasResult,
-  onMaskUpdate,
-  defaultImage
+  hasResult
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (defaultImage) {
-      // Display the default image in your upload area
-      const imageUrl = URL.createObjectURL(defaultImage);
-      setPreviewUrl(imageUrl);
-      setSelectedFile(defaultImage);
-    }
-  }, [defaultImage]);
 
   const validateFile = (file: File): string | null => {
     const maxSize = 20 * 1024 * 1024; // 20MB

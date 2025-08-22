@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ImageUpload from '../components/ImageUpload';
 import ResultsVisualization from '../components/ResultsVisualization';
 
@@ -9,31 +9,6 @@ const TumorSegmentation: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<File | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{width: number, height: number} | null>(null);
-
-  // Add useEffect to load demo image on component mount
-  useEffect(() => {
-    loadDemoImage();
-  }, []);
-
-  const loadDemoImage = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/demo-image');
-      if (!response.ok) {
-        throw new Error('Failed to fetch demo image');
-      }
-      const blob = await response.blob();
-      
-      // Create a File object from the blob
-      const demoFile = new File([blob], 'demo-tumor.png', { type: 'image/png' });
-      setCurrentImage(demoFile);
-      
-      // Analyze the demo image automatically
-      await handleAnalyze(demoFile);
-    } catch (err) {
-      console.error('Error loading demo image:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load demo image');
-    }
-  };
 
   const handleAnalyze = async (imageFile: File) => {
     setIsAnalyzing(true);
@@ -114,7 +89,6 @@ const TumorSegmentation: React.FC = () => {
         onReset={handleReset}
         hasResult={hasResult}
         onMaskUpdate={setMaskUrl}
-        defaultImage={currentImage} // Add this prop to ImageUpload component
       />
       
       {error && (
