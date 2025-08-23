@@ -10,12 +10,12 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              AI-Powered Medical
+              AI-Powered
               <span className="block text-teal-600">Image Analysis</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-              Transform microscope images into actionable insights with our cloud-based AI platform.
-              Advanced tumor segmentation, cell analysis, and more—accessible to research labs and biotech startups.
+              Transform biomedical images into actionable insights.
+              Advanced tumor segmentation, cell analysis, and more. Accessible to research labs and biotech startups.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
@@ -56,7 +56,7 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">High-Resolution Analysis</h3>
               <p className="text-gray-600 leading-relaxed">
-                Process high-resolution microscope images with precision tumor detection and segmentation.
+                Process high-resolution images from whole slide scans, PET scans, and more.
               </p>
             </div>
 
@@ -76,7 +76,7 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Detailed Statistics</h3>
               <p className="text-gray-600 leading-relaxed">
-                Comprehensive metrics including tumor area, region count, and morphological analysis.
+                Comprehensive metrics including cell count, viability, and more.
               </p>
             </div>
 
@@ -98,7 +98,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Designed for Medical Research
+              Designed for Research
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Whether you're a startup, university lab, or biotech company, our platform
@@ -168,7 +168,7 @@ const LandingPage = () => {
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
-                  Audit trail support
+                  Manual override options
                 </li>
               </ul>
             </div>

@@ -131,7 +131,7 @@ const AboutPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Current: Tumor Segmentation</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">PET Scan Tumor Segmentation</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Advanced AI models for precise tumor detection, segmentation, and statistical analysis
                   in microscope images.
@@ -139,7 +139,7 @@ const AboutPage = () => {
               </div>
 
               <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-teal-200">
-                <h3 className="text-lg font-semibold text-teal-700 mb-3">Coming Soon: Cell Counting</h3>
+                <h3 className="text-lg font-semibold text-teal-700 mb-3">Trypan Blue Cell Counting</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Automated cell detection and counting across multiple cell types with morphological
                   classification and viability assessment.
