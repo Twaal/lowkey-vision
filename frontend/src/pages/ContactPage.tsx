@@ -13,7 +13,7 @@ const ContactPage = () => {
             Get in Touch
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Ready to transform your medical image analysis? We'd love to discuss how Low-Key Vision
+            Ready to transform your image analysis? We'd love to discuss how Low-Key Vision
             can accelerate your research and help you achieve your goals.
           </p>
         </div>
