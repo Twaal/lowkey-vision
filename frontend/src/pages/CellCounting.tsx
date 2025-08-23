@@ -17,13 +17,16 @@ const CellCounting: React.FC = () => {
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   // Overlay controls
-  // Load persisted settings if available
-  const storedSettings = typeof window !== 'undefined' ? (() => {
+  // Settings persistence with versioning so new defaults take effect when bumped
+  const SETTINGS_VERSION = 2; // bump to force new defaults
+  const rawStored = typeof window !== 'undefined' ? (() => {
     try { return JSON.parse(localStorage.getItem('cellCountingSettings')||'null'); } catch { return null; }
   })() : null;
+  const storedSettings = rawStored && rawStored.version === SETTINGS_VERSION ? rawStored : null;
   const [showBoxes, setShowBoxes] = useState<boolean>(storedSettings?.showBoxes ?? true);
   const [showLabels, setShowLabels] = useState<boolean>(storedSettings?.showLabels ?? true);
-  const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.2);
+  // UPDATED defaults: score 50%, min area 10 px^2, IOU 0.01
+  const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.5);
   const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
   const [strokeWidth, setStrokeWidth] = useState<number>(storedSettings?.strokeWidth ?? 3);
   const [scale, setScale] = useState(1);
@@ -33,12 +36,12 @@ const CellCounting: React.FC = () => {
   const [newBoxClass, setNewBoxClass] = useState('Alive');
   // Advanced filtering
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 0); // pixels
-  const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.5); // for client-side NMS
+  const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10); // pixels (UPDATED default)
+  const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01); // UPDATED default for client-side NMS
 
   // Persist settings on change
   useEffect(() => {
-    const toStore = { showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold };
+  const toStore = { version: SETTINGS_VERSION, showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold };
     try { localStorage.setItem('cellCountingSettings', JSON.stringify(toStore)); } catch {/* ignore */}
   }, [showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold]);
 

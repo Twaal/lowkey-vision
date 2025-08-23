@@ -24,7 +24,7 @@ from typing import List, Dict, Any, Optional
 
 import numpy as np
 import cv2
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure GPU is disabled unless explicitly desired.
@@ -171,8 +171,7 @@ def cached_prediction(image_hash: int, window: int):
 async def predict_cells(file: UploadFile = File(...),
                         score_threshold: float = 0.0,
                         iou_threshold: float = 0.999,
-                        min_bbox_size: Optional[int] = None,
-                        raw: bool = False):
+                        min_bbox_size: Optional[str] = Query(None, description="Minimum bbox area in pixels^2; leave blank for no size filter")):
     contents = await file.read()
     img = decode_image(contents)
 
@@ -185,29 +184,36 @@ async def predict_cells(file: UploadFile = File(...),
 
     yolo = get_model()
     try:
+        # Parse min_bbox_size (may arrive as empty string)
+        if min_bbox_size in (None, "", "none", "null"):
+            mbs_val: Optional[int] = None
+        else:
+            try:
+                mbs_val = int(min_bbox_size)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail="min_bbox_size must be an integer or empty")
+
         bboxes = run_prediction_array(yolo, img, YOLO_INPUT_SIZE)
         # Sanitize inputs
         score_threshold_s = max(0.0, min(1.0, score_threshold))
         iou_threshold_s = max(0.0, min(0.9999, iou_threshold))  # cap below 1.0 for NMS logic
-        # If raw requested, skip all filtering (except convert to list later)
-        if not raw:
-            # If iou threshold extremely high treat as no-NMS: skip calling filter_bboxes NMS step by setting iou near 1
-            bboxes = filter_bboxes(
-                bboxes,
-                score_threshold=score_threshold_s,
-                iou_threshold=iou_threshold_s,
-                min_bbox_size=min_bbox_size,
-            )
+        # Always apply filtering (raw mode deprecated)
+        bboxes = filter_bboxes(
+            bboxes,
+            score_threshold=score_threshold_s,
+            iou_threshold=iou_threshold_s,
+            min_bbox_size=mbs_val,
+        )
     except Exception as e:  # pragma: no cover - broad for inference robustness
         raise HTTPException(status_code=500, detail=f"Inference failed: {e}") from e
 
     result = prepare_detections(bboxes)
     # Indicate server-side thresholds used
     result["server_thresholds"] = {
-        "score_threshold": score_threshold_s if not raw else 0.0,
-        "iou_threshold": iou_threshold_s if not raw else None,
-        "min_bbox_size": min_bbox_size if not raw else None,
-        "raw": raw,
+        "score_threshold": score_threshold_s,
+        "iou_threshold": iou_threshold_s,
+        "min_bbox_size": mbs_val,
+        "raw": False,  # legacy field retained for frontend compatibility
     }
     return result
 
