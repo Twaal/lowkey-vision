@@ -8,10 +8,10 @@ import cv2
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 # Set input and other parameters
-image_path = "./example/example_image.tif"
-image_path_rescaled = "./example/example_image_rescaled.tif"
-image_path_labeled = "./example/example_image_labeled.tif"
-txt_path_predictions = "./example/predictions.txt"
+image_path = "/mnt/c/Users/theod/Documents/pet_projects/Trypan blue stained animal cells Image Dataset/Real World Images/35.jpg"  # <-- Update this to the copied image path
+image_path_rescaled = "./example/35_rescaled.jpg"
+image_path_labeled = "./example/35_labeled.jpg"
+txt_path_predictions = "./example/35_predictions.txt"
 input_size = YOLO_INPUT_SIZE
 
 # Read image, rescale and save
@@ -25,7 +25,19 @@ if YOLO_TYPE == 'yolov3':
 elif YOLO_TYPE == 'yolov4':
     yolo = Create_Yolo(input_size=input_size, CLASSES=TRAIN_CLASSES)
 yolo.load_weights("./"+TRAIN_CHECKPOINTS_FOLDER+"/"+TRAIN_MODEL_NAME)
-print(yolo.summary())
-detect_image(yolo, image_path_rescaled, image_path_labeled, input_size=input_size, show=True, write=True,
-             show_label=False, classes=TRAIN_CLASSES, rectangle_colors='', iou_threshold=0.35, score_threshold=0.4,
-             min_bbox_size=150, txt_output_path=txt_path_predictions)
+# print(yolo.summary())
+detect_image(
+    yolo,
+    image_path_rescaled,
+    image_path_labeled,
+    input_size=input_size,
+    show=False,  # Disable GUI/Qt usage
+    write=True,
+    show_label=True,
+    classes=TRAIN_CLASSES,
+    rectangle_colors='',
+    iou_threshold=0.999,  # effectively disable NMS merging (keep almost all boxes)
+    score_threshold=0.0,  # keep all raw predictions
+    min_bbox_size=None,   # disable size filtering
+    txt_output_path=txt_path_predictions
+)

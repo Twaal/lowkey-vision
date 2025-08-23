@@ -6,13 +6,15 @@ interface ImageUploadProps {
   isAnalyzing: boolean;
   onReset: () => void;
   hasResult: boolean;
+  guidelines?: React.ReactNode; // Optional custom guidelines content
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
   onAnalyze,
   isAnalyzing,
   onReset,
-  hasResult
+  hasResult,
+  guidelines
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -223,16 +225,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       {/* Upload Guidelines */}
       <div className="bg-blue-50 rounded-lg p-6">
         <h3 className="font-medium text-gray-900 mb-3">Upload Guidelines</h3>
-        <ul className="text-sm text-gray-700 space-y-2">
-          <li className="flex items-start">
-            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Ensure images are well-focused with clear contrast between tumor and normal tissue</span>
-          </li>
-          <li className="flex items-start">
-            <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-            <span>Images are automatically deleted after analysis for your privacy</span>
-          </li>
-        </ul>
+        {guidelines ? (
+          <div className="text-sm text-gray-700 space-y-2">{guidelines}</div>
+        ) : (
+          <ul className="text-sm text-gray-700 space-y-2">
+            <li className="flex items-start">
+              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+              <span>Ensure images are well-focused with clear contrast between tumor and normal tissue</span>
+            </li>
+            <li className="flex items-start">
+              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+              <span>Images are automatically deleted after analysis for your privacy</span>
+            </li>
+          </ul>
+        )}
       </div>
     </div>
   );

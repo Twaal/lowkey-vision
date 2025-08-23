@@ -19,3 +19,13 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+  cell-counter:
+    build:
+      context: ./cell-counter-yolov4
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./cell-counter-yolov4:/app
+    environment:
+      - PYTHONUNBUFFERED=1

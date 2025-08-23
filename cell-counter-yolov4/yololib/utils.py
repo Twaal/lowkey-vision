@@ -298,16 +298,20 @@ def run_prediction(yolo, image_path, input_size=416):
 
 
 def filter_bboxes(bboxes, score_threshold=0.3, iou_threshold=0.45, min_bbox_size=None):
+    """Filter bounding boxes by score, size, and optionally NMS.
 
-    if len(bboxes) > 0:
-        bboxes = filter_score_bboxes(bboxes, score_threshold)
-    if len(bboxes) > 0:
-        bboxes = filter_small_bboxes(bboxes, min_bbox_size)
-    if len(bboxes) > 0:
-        bboxes = nms(bboxes, iou_threshold, method='nms')
+    If iou_threshold >= 0.99 we treat this as a request to skip NMS (return all boxes after score/size filtering).
+    """
+    if len(bboxes) == 0:
+        return []
+    bboxes = filter_score_bboxes(bboxes, score_threshold) if len(bboxes) > 0 else bboxes
+    bboxes = filter_small_bboxes(bboxes, min_bbox_size) if len(bboxes) > 0 else bboxes
+    if len(bboxes) == 0:
+        return []
+    if iou_threshold >= 0.99:
+        # Skip NMS
         return bboxes
-
-    return []
+    return nms(bboxes, iou_threshold, method='nms')
 
 
 def get_pred_info(image_path, bboxes, output_path, show=False, write=True, show_label=True,
