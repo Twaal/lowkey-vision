@@ -7,7 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 models/
-cell-counter/checkpoints/
+cell-counter-yolov4/checkpoints/
 *.pth
 node_modules
 dist
