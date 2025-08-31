@@ -23,6 +23,7 @@ interface OverlayProps {
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void;
   annotationMode?: boolean;
   onNewBox?: (bbox: [number, number, number, number]) => void;
+  autoFit?: boolean; // auto scale image to fit container on first load
 }
 
 const defaultPalette = ['#10b981', '#ef4444', '#6366f1', '#f59e0b', '#ec4899', '#3b82f6'];
@@ -40,19 +41,24 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   selectedClasses,
   onCanvasReady,
   annotationMode = false,
-  onNewBox
+  onNewBox,
+  autoFit = true
 }: OverlayProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [draftRect, setDraftRect] = useState<[number, number, number, number] | null>(null);
   const dragState = useRef<{ dragging: boolean; startX: number; startY: number }>({ dragging: false, startX: 0, startY: 0 });
+  const hasAutoFit = useRef(false);
+
+  // Reset autofit flag when image changes
+  useEffect(() => { hasAutoFit.current = false; }, [imageUrl]);
 
   // Render image + detections + draft rectangle
   useEffect(() => {
     const img = new Image();
     imgRef.current = img;
-    img.onload = () => {
+  img.onload = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       canvas.width = img.width;
@@ -105,9 +111,27 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
         }
       }
       onCanvasReady && onCanvasReady(canvasRef.current);
+      // Auto-fit (only once per image) if image wider than container (or taller relative to max height) and scale is default (≈1)
+      if (autoFit && !hasAutoFit.current && onScaleChange) {
+        const container = containerRef.current;
+        if (container) {
+          const availW = container.clientWidth || window.innerWidth;
+          // Attempt to use parent height if constrained, else window height minus some padding
+          const availH = container.clientHeight || Math.min(window.innerHeight - 200, 900);
+          const scaleW = availW < img.width ? availW / img.width : 1;
+            const scaleH = availH < img.height ? availH / img.height : 1;
+          const fitScale = Math.min(scaleW, scaleH, 1); // never upscale
+          if (fitScale < 0.999 && (scale === undefined || Math.abs((scale||1) - 1) < 0.001)) {
+            hasAutoFit.current = true;
+            onScaleChange(parseFloat(fitScale.toFixed(3)));
+          } else {
+            hasAutoFit.current = true; // still mark to avoid repeated checks
+          }
+        }
+      }
     };
     img.src = imageUrl;
-  }, [imageUrl, detections, showBoxes, showLabels, minScore, classColors, selectedClasses, onCanvasReady, strokeWidth, draftRect]);
+  }, [imageUrl, detections, showBoxes, showLabels, minScore, classColors, selectedClasses, onCanvasReady, strokeWidth, draftRect, autoFit, onScaleChange, scale]);
 
   // Wheel zoom (ctrl/meta + wheel)
   useEffect(() => {
