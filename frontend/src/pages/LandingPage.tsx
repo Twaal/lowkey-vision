@@ -1,39 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Microscope, Brain, BarChart3, Shield } from 'lucide-react';
+import HeroVideo from '../components/HeroVideo';
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-teal-50 to-blue-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-              AI-Powered
-              <span className="block text-teal-600">Cell Counting</span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-              Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link
-                to="/cell-counting"
-                className="inline-flex items-center px-8 py-4 bg-teal-600 text-white text-lg font-semibold rounded-lg hover:bg-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-              >
-                Try Cell Counting Demo
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                to="/about"
-                className="inline-flex items-center px-8 py-4 border-2 border-gray-300 text-gray-700 text-lg font-semibold rounded-lg hover:border-teal-600 hover:text-teal-600 transition-all duration-200"
-              >
-                Learn More
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Video Hero Section */}
+      <HeroVideo
+        videoSrc="/media/hero-cells.mp4" // PLACE your video under public/media/
+        poster="/media/hero-poster.jpg"   // Optional poster image
+        heading={<><span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-200 to-emerald-300">AI-Powered</span><span className="block">Cell Counting & Analysis</span></>}
+        subheading="Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams."
+        primaryCta={{ label: 'Try Cell Counting Demo', to: '/cell-counting' }}
+        secondaryCta={{ label: 'Learn More', to: '/about' }}
+      />
 
       {/* Features Section */}
       <section className="py-20 bg-white">
