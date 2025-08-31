@@ -27,8 +27,7 @@ const AboutPage = () => {
                 <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
                 <p className="text-lg text-gray-700 mb-6 leading-relaxed">
                   Automate routine microscopy quantification so scientists can think instead of tally.
-                  We remove friction in viability checks, passage monitoring, confluence tracking, and
-                  experimental normalization for high-usage cell lines.
+                  We remove friction in viability checks for high-usage cell lines.
                 </p>
                 <p className="text-lg text-gray-700 leading-relaxed">
                   Starting with robust Trypan blue exclusion counting, we are expanding toward
@@ -94,7 +93,7 @@ const AboutPage = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Cloud Microservices</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  GPU-backed workers with queueing + autoscaling so batch well-counts complete in
+                  GPU-backed workers with queueing + autoscaling to complete the task in
                   seconds without local setup.
                 </p>
               </div>
@@ -107,8 +106,7 @@ const AboutPage = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Researcher UX</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Fast keyboard-driven review, in-browser annotation, and exportable audit trails
-                  for regulated environments.
+                  Fast in-browser annotation, and exportable audit trails.
                 </p>
               </div>
             </div>
