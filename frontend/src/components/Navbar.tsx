@@ -10,9 +10,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const useCases = [
-    { name: 'Tumor Segmentation', path: '/tumor-segmentation', available: true },
     { name: 'Cell Counting', path: '/cell-counting', available: true },
-    { name: 'Morphology Analysis', path: '/morphology-analysis', available: false },
   ];
 
   return (

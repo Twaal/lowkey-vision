@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
-import TumorSegmentation from './pages/TumorSegmentation';
 import CellCounting from './pages/CellCounting';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -14,7 +13,6 @@ const App: React.FC = () => {
         <Navbar />
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/tumor-segmentation" element={<TumorSegmentation />} />
           <Route path="/cell-counting" element={<CellCounting />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />

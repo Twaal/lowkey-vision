@@ -16,12 +16,12 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
     const csvContent = [
       ['Metric', 'Value', 'Unit'],
-      ['Total Tumor Area', statistics.totalTumorArea.toString(), 'μm²'],
-      ['Tumor Area Percentage', statistics.tumorAreaPercentage.toString(), '%'],
-      ['Number of Regions', statistics.numberOfRegions.toString(), 'count'],
-      ['Mean Region Size', statistics.meanRegionSize.toString(), 'μm²'],
-      ['Largest Region Size', statistics.largestRegionSize.toString(), 'μm²'],
-      ['Smallest Region Size', statistics.smallestRegionSize.toString(), 'μm²'],
+      ['Total Cell Area', statistics.totalCellArea.toString(), 'μm²'],
+      ['Cell Coverage %', statistics.cellCoveragePercentage.toString(), '%'],
+      ['Detections', statistics.numberOfDetections.toString(), 'count'],
+      ['Mean Cell Area', statistics.meanCellArea.toString(), 'μm²'],
+      ['Largest Cell Area', statistics.largestCellArea.toString(), 'μm²'],
+      ['Smallest Cell Area', statistics.smallestCellArea.toString(), 'μm²'],
       ['Image Resolution', statistics.imageResolution, 'pixels'],
       ['Analysis Date', new Date(statistics.analysisDate).toLocaleString(), '']
     ].map(row => row.join(',')).join('\n');
@@ -30,7 +30,7 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `tumor_analysis_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `cell_analysis_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -73,26 +73,26 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
   const statisticsData = [
     {
       icon: Target,
-      label: 'Total Tumor Area',
-      value: `${statistics.totalTumorArea.toLocaleString()} μm²`,
-      color: 'text-red-600'
+      label: 'Total Cell Area',
+      value: `${statistics.totalCellArea.toLocaleString()} μm²`,
+      color: 'text-teal-700'
     },
     {
       icon: BarChart3,
-      label: 'Tumor Coverage',
-      value: `${statistics.tumorAreaPercentage}%`,
+      label: 'Cell Coverage',
+      value: `${statistics.cellCoveragePercentage}%`,
       color: 'text-orange-600'
     },
     {
       icon: Layers,
-      label: 'Number of Regions',
-      value: statistics.numberOfRegions.toString(),
+      label: 'Detections',
+      value: statistics.numberOfDetections.toString(),
       color: 'text-blue-600'
     },
     {
       icon: Ruler,
-      label: 'Mean Region Size',
-      value: `${statistics.meanRegionSize.toLocaleString()} μm²`,
+      label: 'Mean Cell Area',
+      value: `${statistics.meanCellArea.toLocaleString()} μm²`,
       color: 'text-green-600'
     }
   ];
@@ -123,21 +123,21 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Metrics</h3>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600">Largest Region:</span>
+            <span className="text-gray-600">Largest Cell:</span>
             <span className="font-medium text-gray-900">
-              {statistics.largestRegionSize.toLocaleString()} μm²
+              {statistics.largestCellArea.toLocaleString()} μm²
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Smallest Region:</span>
+            <span className="text-gray-600">Smallest Cell:</span>
             <span className="font-medium text-gray-900">
-              {statistics.smallestRegionSize.toLocaleString()} μm²
+              {statistics.smallestCellArea.toLocaleString()} μm²
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Size Variation:</span>
             <span className="font-medium text-gray-900">
-              {(statistics.largestRegionSize / statistics.smallestRegionSize).toFixed(1)}x
+              {(statistics.largestCellArea / statistics.smallestCellArea).toFixed(1)}x
             </span>
           </div>
           <div className="flex justify-between">
@@ -184,17 +184,17 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
         <h4 className="font-medium text-teal-900 mb-3">Quick Summary</h4>
         <div className="text-sm text-teal-800 space-y-2">
           <p>
-            • <span className="font-medium">{statistics.numberOfRegions} tumor regions</span> detected
+            • <span className="font-medium">{statistics.numberOfDetections} cells</span> detected
           </p>
           <p>
-            • <span className="font-medium">{statistics.tumorAreaPercentage}% of image</span> contains tumor tissue
+            • <span className="font-medium">{statistics.cellCoveragePercentage}% area coverage</span> by detected cells
           </p>
           <p>
-            • Average region size is <span className="font-medium">{statistics.meanRegionSize.toLocaleString()} μm²</span>
+            • Mean cell area <span className="font-medium">{statistics.meanCellArea.toLocaleString()} μm²</span>
           </p>
-          {statistics.numberOfRegions > 1 && (
+          {statistics.numberOfDetections > 1 && (
             <p>
-              • Size ranges from {statistics.smallestRegionSize.toLocaleString()} to {statistics.largestRegionSize.toLocaleString()} μm²
+              • Size range {statistics.smallestCellArea.toLocaleString()} – {statistics.largestCellArea.toLocaleString()} μm²
             </p>
           )}
         </div>

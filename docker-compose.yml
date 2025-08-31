@@ -11,14 +11,6 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
   cell-counter:
     build:
       context: ./cell-counter-yolov4

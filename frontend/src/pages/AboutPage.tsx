@@ -9,12 +9,13 @@ const AboutPage = () => {
         {/* Hero Section */}
         <div className="text-center mb-20">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Advancing Medical Research Through
-            <span className="block text-teal-600">AI-Powered Image Analysis</span>
+            Focused Cell Analytics For
+            <span className="block text-teal-600">Immortal Cell Lines</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            Low-Key Vision is revolutionizing medical image analysis by making advanced AI tools
-            accessible to research labs, biotech startups, and clinical researchers worldwide.
+            Low-Key Vision delivers fast, precise, and reproducible cell counting and viability analysis
+            for common immortal cell lines like HeLa, HEK293, CHO, and Jurkat—eliminating manual tallies
+            and spreadsheet fatigue.
           </p>
         </div>
 
@@ -25,15 +26,14 @@ const AboutPage = () => {
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
                 <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-                  We believe that groundbreaking medical research shouldn't be limited by access to
-                  expensive hardware or complex software. Our cloud-based platform democratizes
-                  advanced image analysis, enabling researchers to focus on discovery rather than
-                  technical barriers.
+                  Automate routine microscopy quantification so scientists can think instead of tally.
+                  We remove friction in viability checks, passage monitoring, confluence tracking, and
+                  experimental normalization for high-usage cell lines.
                 </p>
                 <p className="text-lg text-gray-700 leading-relaxed">
-                  From tumor segmentation to cell counting and morphological analysis, we're building
-                  the comprehensive toolkit that medical researchers need to accelerate their work
-                  and drive meaningful clinical outcomes.
+                  Starting with robust Trypan blue exclusion counting, we are expanding toward
+                  morphology-aware metrics (cell size, circularity), colony detection, and label‑free
+                  viability estimation—always emphasizing reproducibility and transparency.
                 </p>
               </div>
               <div className="flex justify-center">
@@ -71,7 +71,7 @@ const AboutPage = () => {
         {/* Technology Section */}
         <div className="mb-20">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Cutting-Edge Technology Stack
+            Purpose-Built Stack For Cell Quantification
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
@@ -79,10 +79,10 @@ const AboutPage = () => {
                 <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mx-auto mb-6">
                   <Brain className="h-6 w-6 text-teal-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Deep Learning Models</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Detection & Viability Models</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  State-of-the-art convolutional neural networks trained on extensive medical
-                  imaging datasets for precise tumor detection and segmentation.
+                  Ensemble object detection and density-aware post-processing tuned on curated
+                  HeLa / HEK293 / CHO / Jurkat datasets with staining variability normalization.
                 </p>
               </div>
             </div>
@@ -92,10 +92,10 @@ const AboutPage = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-6">
                   <Microscope className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Cloud Infrastructure</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Cloud Microservices</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Scalable, secure cloud architecture ensuring fast processing times and
-                  reliable results for researchers worldwide.
+                  GPU-backed workers with queueing + autoscaling so batch well-counts complete in
+                  seconds without local setup.
                 </p>
               </div>
             </div>
@@ -105,10 +105,10 @@ const AboutPage = () => {
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-6">
                   <Users className="h-6 w-6 text-green-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">User-Centric Design</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Researcher UX</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Intuitive interfaces designed by and for researchers, making complex
-                  analysis workflows accessible to users of all technical backgrounds.
+                  Fast keyboard-driven review, in-browser annotation, and exportable audit trails
+                  for regulated environments.
                 </p>
               </div>
             </div>
@@ -120,37 +120,37 @@ const AboutPage = () => {
           <div className="bg-gray-50 rounded-2xl p-12">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Building the Future of Medical Analysis
+                Roadmap For Quantitative Cell Biology
               </h2>
               <p className="text-lg text-gray-700 max-w-4xl mx-auto mb-8 leading-relaxed">
-                Our platform is designed for extensibility and growth. While we're launching with
-                tumor segmentation, our architecture supports a wide range of analysis types
-                including cell counting, morphological analysis, and custom model integration.
+                Extensible modular services enable rapid addition of analysis modes: multi-stain
+                viability fusion, morphology statistics, colony / spheroid detection, confluent area
+                tracking, and temporal growth curves.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">PET Scan Tumor Segmentation</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Immortal Cell Line Counting</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Advanced AI models for precise tumor detection, segmentation, and statistical analysis
-                  in microscope images.
+                  Robust detection & viability on HeLa, HEK293, CHO, Jurkat and similar lines with
+                  stain-aware preprocessing and batch automation.
                 </p>
               </div>
 
               <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-teal-200">
-                <h3 className="text-lg font-semibold text-teal-700 mb-3">Trypan Blue Cell Counting</h3>
+                <h3 className="text-lg font-semibold text-teal-700 mb-3">Trypan Blue Viability</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Automated cell detection and counting across multiple cell types with morphological
-                  classification and viability assessment.
+                  Automated alive / dead detection with per-class counts, viability %, and exportable
+                  QC metrics for notebook integration.
                 </p>
               </div>
 
               <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-blue-200">
-                <h3 className="text-lg font-semibold text-blue-700 mb-3">Future: Morphology Analysis</h3>
+                <h3 className="text-lg font-semibold text-blue-700 mb-3">Upcoming: Morphology & Growth</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Comprehensive morphological analysis including shape descriptors, texture analysis,
-                  and phenotypic characterization.
+                  Cell size & circularity distribution, confluence estimation, colony / spheroid
+                  emergence tracking, and longitudinal growth metrics.
                 </p>
               </div>
             </div>
@@ -169,7 +169,7 @@ const AboutPage = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/tumor-segmentation"
+                to="/cell-counting"
                 className="inline-flex items-center px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-lg"
               >
                 Try Our Demo

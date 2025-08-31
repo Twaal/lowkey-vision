@@ -107,12 +107,12 @@ const TumorSegmentation: React.FC = () => {
                 segmentationMask: maskUrl,
                 statistics: {
                   imageResolution: `${imageDimensions.width}x${imageDimensions.height}`,
-                  totalTumorArea: 0,
-                  tumorAreaPercentage: 0,
-                  numberOfRegions: 0,
-                  meanRegionSize: 0,
-                  largestRegionSize: 0,
-                  smallestRegionSize: 0,
+                  totalCellArea: 0,
+                  cellCoveragePercentage: 0,
+                  numberOfDetections: 0,
+                  meanCellArea: 0,
+                  largestCellArea: 0,
+                  smallestCellArea: 0,
                   analysisDate: new Date().toISOString()
                 }
               }}

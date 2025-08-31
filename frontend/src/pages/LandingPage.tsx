@@ -11,18 +11,17 @@ const LandingPage = () => {
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
               AI-Powered
-              <span className="block text-teal-600">Image Analysis</span>
+              <span className="block text-teal-600">Cell Counting</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed">
-              Transform biomedical images into actionable insights.
-              Advanced tumor segmentation, cell analysis, and more. Accessible to research labs and biotech startups.
+              Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                to="/tumor-segmentation"
+                to="/cell-counting"
                 className="inline-flex items-center px-8 py-4 bg-teal-600 text-white text-lg font-semibold rounded-lg hover:bg-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
               >
-                Try Tumor Segmentation Demo
+                Try Cell Counting Demo
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
@@ -41,11 +40,10 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Advanced AI Analysis for Medical Imaging
+              Advanced AI Cell Analysis
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Our platform combines cutting-edge AI models with intuitive interfaces to deliver
-              professional-grade analysis tools for medical research.
+              Purpose-built deep learning models and intuitive UX deliver professional-grade quantitative cell analysis.
             </p>
           </div>
 
@@ -109,14 +107,14 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-200">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Research Labs</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Accelerate your research with automated tumor detection and analysis.
-                Perfect for academic institutions and research facilities.
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                Accelerate research with automated, reproducible cell counts across large image batches.
+                Ideal for academic institutions and core facilities.
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-teal-600 rounded-full mr-3"></div>
-                  High-throughput analysis
+                  High-throughput batching
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-teal-600 rounded-full mr-3"></div>
@@ -153,9 +151,8 @@ const LandingPage = () => {
 
             <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-200">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Clinical Trials</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                Standardize image analysis across multiple sites with consistent,
-                validated AI models for clinical research.
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                Standardize quantitative cell metrics across multiple sites with consistent, validated AI models.
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-center">
@@ -179,18 +176,17 @@ const LandingPage = () => {
       {/* CTA Section */}
       <section className="py-20 bg-teal-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Transform Your Image Analysis?
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Ready to Get Accurate Cell Counts?
           </h2>
           <p className="text-xl text-teal-100 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Experience the power of AI-driven medical image analysis.
-            Upload your first image and see results in seconds.
+            Upload a microscopy image and get fast, reproducible cell metrics in seconds.
           </p>
           <Link
-            to="/tumor-segmentation"
+            to="/cell-counting"
             className="inline-flex items-center px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            Start Analyzing Images
+            Start Counting Cells
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </div>

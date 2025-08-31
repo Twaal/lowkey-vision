@@ -1,17 +1,17 @@
 export interface AnalysisStatistics {
-  totalTumorArea: number; // in μm²
-  tumorAreaPercentage: number; // percentage of total image
-  numberOfRegions: number;
-  meanRegionSize: number; // in μm²
-  largestRegionSize: number; // in μm²
-  smallestRegionSize: number; // in μm²
+  totalCellArea: number; // in μm² (summed area of detected cells when available)
+  cellCoveragePercentage: number; // percentage of total image covered by detected cells
+  numberOfDetections: number; // count of detected cell objects
+  meanCellArea: number; // in μm²
+  largestCellArea: number; // in μm²
+  smallestCellArea: number; // in μm²
   imageResolution: string; // e.g., "2048x1536"
   analysisDate: string; // ISO string
 }
 
 export interface AnalysisResult {
   originalImage: string; // URL or base64
-  segmentationMask: string; // URL or base64 of the mask
+  segmentationMask: string; // URL or base64 (could be density / mask overlay)
   statistics: AnalysisStatistics;
 }
 

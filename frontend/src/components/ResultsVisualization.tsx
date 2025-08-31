@@ -39,7 +39,7 @@ const ResultsVisualization: FC<ResultsVisualizationProps> = ({
             />
             <img
               src={result.segmentationMask}
-              alt="Tumor regions"
+              alt="Cell mask overlay"
               className="absolute inset-0 w-full h-full object-contain"
               style={{ opacity: 0.5 }}
             />
