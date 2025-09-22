@@ -288,6 +288,9 @@ function areEqual(prev: Readonly<OverlayProps>, next: Readonly<OverlayProps>): b
   if (prev.scale !== next.scale) return false; // scale transforms container only, but safer to redraw
   if (prev.annotationMode !== next.annotationMode) return false;
   if (prev.strokeWidth !== next.strokeWidth) return false;
+  // IMPORTANT: when the annotation callback changes (e.g., selected class updated),
+  // we must re-render to rebind event handlers so new annotations use the latest class.
+  if (prev.onNewBox !== next.onNewBox) return false;
   // Compare selected class sets (sizes + membership)
   const prevSel = prev.selectedClasses; const nextSel = next.selectedClasses;
   if (prevSel || nextSel) {

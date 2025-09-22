@@ -18,6 +18,7 @@ interface OverlayControlsProps {
   extraLeftButtons?: React.ReactNode;
   extraRightButtons?: React.ReactNode;
   showAnnotationControls?: boolean;
+  onClearManualAnnotations?: () => void;
 }
 
 const OverlayControls: React.FC<OverlayControlsProps> = ({
@@ -37,7 +38,8 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
   toggleClass,
   extraLeftButtons,
   extraRightButtons,
-  showAnnotationControls = true
+  showAnnotationControls = true,
+  onClearManualAnnotations
 }: OverlayControlsProps) => {
   const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -89,6 +91,20 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
               </label>
             )}
           </>
+        )}
+        {showAnnotationControls && annotationMode && onClearManualAnnotations && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Remove all manual annotations?')) {
+                onClearManualAnnotations();
+              }
+            }}
+            className="text-sm px-3 py-1 border rounded text-red-600 border-red-300 hover:bg-red-50"
+            title="Remove all manually added boxes"
+          >
+            Clear Manual Annotations
+          </button>
         )}
         {extraLeftButtons}
         <div className="ml-auto flex gap-2">{extraRightButtons}</div>

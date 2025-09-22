@@ -344,6 +344,7 @@ const CellCounting: React.FC = () => {
             availableClasses={processedDetections.map(d=>d.class_name)}
             selectedClasses={selectedClasses}
             toggleClass={toggleClass}
+            onClearManualAnnotations={() => setManualDetections([])}
           />
           <div className="w-full">
             <DetectionsOverlay
@@ -510,6 +511,10 @@ const CellCounting: React.FC = () => {
                 selectedClasses={selectedClasses}
                 toggleClass={toggleClass}
                 extraRightButtons={<button onClick={downloadCsv} className="inline-flex items-center gap-1 px-3 py-1 border rounded text-xs bg-white hover:bg-teal-50"><Download className="w-4 h-4"/>CSV</button>}
+                onClearManualAnnotations={() => {
+                  if (!currentBatchItem) return;
+                  setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
+                }}
               />
               <DetectionsOverlay
                 imageUrl={currentBatchItem.url}
