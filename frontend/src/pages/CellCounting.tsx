@@ -130,8 +130,8 @@ const CellCounting: React.FC = () => {
     setBatchRunning(true);
     let processed = 0;
     const total = batchItems.length;
+    let firstShown = false; // auto-select the first successfully completed image only once
     for (let i = 0; i < batchItems.length; i++) {
-      setBatchIndex(i);
   setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'processing' } : it));
       try {
         const formData = new FormData();
@@ -139,9 +139,14 @@ const CellCounting: React.FC = () => {
         const resp = await fetch('http://localhost:8001/predict', { method: 'POST', body: formData });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const json: PredictionResponse = await resp.json();
-  setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'done', result: json } : it));
+        setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'done', result: json } : it));
+        // Show the first finished image immediately and keep it visible while others process
+        if (!firstShown) {
+          firstShown = true;
+          setBatchIndex(i);
+        }
       } catch (e: any) {
-  setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'error', error: e.message || 'Failed' } : it));
+        setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'error', error: e.message || 'Failed' } : it));
       }
       processed++;
       setBatchProgress({ processed, total });
@@ -479,7 +484,8 @@ const CellCounting: React.FC = () => {
               </div>
             )}
           </div>
-          {currentBatchItem && currentBatchItem.result && (
+          {currentBatchItem && (
+            currentBatchItem.result ? (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold">Image {batchIndex+1} / {batchItems.length} — {currentBatchItem.file.name}</h2>
@@ -550,6 +556,12 @@ const CellCounting: React.FC = () => {
                 </div>
               )}
             </div>
+            ) : (
+              <div className="p-8 bg-white border rounded text-sm text-gray-600">
+                <div className="animate-pulse mb-2 font-medium">Processing image {batchIndex+1} of {batchItems.length}…</div>
+                <div>This view will update automatically once the first image finishes. The rest will continue processing in the background.</div>
+              </div>
+            )
           )}
         </div>
       )}
