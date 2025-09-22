@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import ImageUpload from '../components/ImageUpload';
 import DetectionsOverlay, { DetectionBox } from '../components/DetectionsOverlay';
 import OverlayControls from '../components/OverlayControls';
-import { Download, FolderOpen, Play, Pause, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { Download, FolderOpen, Play, Pause, ChevronLeft, ChevronRight, Layers, Camera } from 'lucide-react';
 
 interface PredictionResponse {
   model: string;
@@ -35,6 +35,8 @@ const CellCounting: React.FC = () => {
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchProgress, setBatchProgress] = useState<{ processed: number; total: number }>({ processed: 0, total: 0 });
+  // Hidden camera input for mobile capture
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const currentBatchItem = batchItems[batchIndex];
   // Overlay controls
   // Settings persistence with versioning so new defaults take effect when bumped
@@ -123,6 +125,15 @@ const CellCounting: React.FC = () => {
     const newItems: BatchItem[] = files.map((f: File) => ({ id: crypto.randomUUID(), file: f, url: URL.createObjectURL(f), status: 'pending', manualDetections: [] }));
     setBatchItems((prev: BatchItem[]) => [...prev, ...newItems]);
     setBatchProgress((p: { processed: number; total: number }) => ({ processed: p.processed, total: prevTotal(batchItems, newItems.length) }));
+  };
+
+  // Camera capture handler (single photo -> add to batch)
+  const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    handleBatchFiles(files);
+    // reset input so the same camera can be used repeatedly
+    e.target.value = '';
   };
 
   const runBatch = useCallback(async () => {
@@ -444,6 +455,26 @@ const CellCounting: React.FC = () => {
                 {/* @ts-ignore */}
                 <input type="file" multiple webkitdirectory="true" directory="true" onChange={(e)=>handleBatchFiles(e.target.files)} className="text-xs" />
               </div>
+              {/* Hidden camera input to invoke mobile camera */}
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                // capture hint for mobile browsers (rear camera); ignored on desktop
+                // @ts-ignore - capture is a valid non-standard attribute
+                capture="environment"
+                onChange={handleCameraCapture}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={batchRunning}
+                className="inline-flex items-center gap-2 px-4 py-2 border rounded bg-white hover:bg-gray-50 disabled:opacity-50"
+                title="Open camera to take a photo and add to batch"
+              >
+                <Camera className="w-4 h-4"/> Take Photo
+              </button>
               <button onClick={runBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded disabled:bg-gray-400"><Play className="w-4 h-4"/>{batchRunning?'Running...':'Start Batch'}</button>
               <button onClick={clearBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-4 py-2 border rounded bg-white hover:bg-gray-50 disabled:opacity-50"><Pause className="w-4 h-4"/>Clear</button>
               {batchItems.length>0 && (
