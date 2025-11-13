@@ -30,3 +30,14 @@ services:
       - ./cell-counter-yolov4:/app
     environment:
       - PYTHONUNBUFFERED=1
+
+  cell-counter-v8:
+    build:
+      context: ./cell-counter-yolov8
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./cell-counter-yolov8:/app
+    environment:
+      - PYTHONUNBUFFERED=1

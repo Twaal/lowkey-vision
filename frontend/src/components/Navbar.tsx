@@ -11,6 +11,7 @@ const Navbar = () => {
 
   const useCases = [
     { name: 'Cell Counter YOLOv4', path: '/cell-counting', available: true },
+    { name: 'Cell Counter YOLOv8', path: '/cell-counting-v8', available: true },
   ];
 
   return (
