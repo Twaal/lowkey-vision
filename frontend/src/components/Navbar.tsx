@@ -10,7 +10,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const useCases = [
-    { name: 'Cell Counting', path: '/cell-counting', available: true },
+    { name: 'Cell Counter YOLOv4', path: '/cell-counting', available: true },
   ];
 
   return (

@@ -12,7 +12,7 @@ const LandingPage = () => {
         poster="/media/hero-poster.jpg"   // Optional poster image
         heading={<><span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-200 to-emerald-300">AI-Powered</span><span className="block">Cell Counting & Analysis</span></>}
         subheading="Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams."
-        primaryCta={{ label: 'Try Cell Counting Demo', to: '/cell-counting' }}
+  primaryCta={{ label: 'Try Cell Counter YOLOv4', to: '/cell-counting' }}
         secondaryCta={{ label: 'Learn More', to: '/about' }}
       />
 
@@ -167,7 +167,7 @@ const LandingPage = () => {
             to="/cell-counting"
             className="inline-flex items-center px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            Start Counting Cells
+            Open Cell Counter YOLOv4
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </div>
