@@ -20,7 +20,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
 
-  cell-counter:
+  cell-counter-v4:
     build:
       context: ./cell-counter-yolov4
       dockerfile: Dockerfile
