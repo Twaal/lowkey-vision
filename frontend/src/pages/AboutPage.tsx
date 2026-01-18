@@ -13,7 +13,7 @@ const AboutPage = () => {
             <span className="block text-teal-600">Immortal Cell Lines</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            Low-Key Vision delivers fast, precise, and reproducible cell counting and viability analysis
+            Lowkey Vision delivers fast, precise, and reproducible cell counting and viability analysis
             for common immortal cell lines like HeLa, HEK293, CHO, and Jurkat—eliminating manual tallies
             and spreadsheet fatigue.
           </p>
@@ -162,7 +162,7 @@ const AboutPage = () => {
               Ready to Accelerate Your Research?
             </h2>
             <p className="text-xl text-teal-100 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Join leading research institutions and biotech companies using Low-Key Vision
+              Join leading research institutions and biotech companies using Lowkey Vision
               to transform their image analysis workflows.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
