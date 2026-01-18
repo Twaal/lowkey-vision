@@ -1,3 +1,0 @@
-live
-dead
-Aggregate
