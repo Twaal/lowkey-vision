@@ -23,17 +23,13 @@ interface BatchItem {
 }
 
 const CellCountingV8: React.FC = () => {
-  // Single-image mode removed; this page is batch-only
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchProgress, setBatchProgress] = useState<{ processed: number; total: number }>({ processed: 0, total: 0 });
-  // Hidden camera input for mobile capture
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const currentBatchItem = batchItems[batchIndex];
-  // Overlay controls
-  // Settings persistence with versioning so new defaults take effect when bumped
-  const SETTINGS_VERSION = 4; // keep consistent with v4 page
+  const SETTINGS_VERSION = 4;
   const rawStored = typeof window !== 'undefined' ? (() => {
     try { return JSON.parse(localStorage.getItem('cellCountingSettingsV8')||'null'); } catch { return null; }
   })() : null;
@@ -49,20 +45,17 @@ const CellCountingV8: React.FC = () => {
   const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set(CLASS_TOGGLES));
   const [strokeWidth, setStrokeWidth] = useState<number>(storedSettings?.strokeWidth ?? 3);
   const [scale, setScale] = useState(1);
-  // Manual annotation state
   const [annotationMode, setAnnotationMode] = useState(false);
   const [newBoxClass, setNewBoxClass] = useState('live');
-  // Advanced filtering
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10);
   const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01);
   const [showTools, setShowTools] = useState(true);
   const [showEarlyAccessModal, setShowEarlyAccessModal] = useState(false);
 
-  // Persist settings on change
   useEffect(() => {
     const toStore = { version: SETTINGS_VERSION, showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold };
-    try { localStorage.setItem('cellCountingSettingsV8', JSON.stringify(toStore)); } catch {/* ignore */}
+    try { localStorage.setItem('cellCountingSettingsV8', JSON.stringify(toStore)); } catch {}
   }, [showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold]);
 
   const toggleClass = (name: string) => {
@@ -73,7 +66,6 @@ const CellCountingV8: React.FC = () => {
     });
   };
 
-  // ===== Batch helpers =====
   const acceptableTypes = new Set(['image/jpeg','image/png','image/tiff']);
   const prevTotal = (prev: BatchItem[], added: number) => prev.length + added;
   const handleBatchFiles = (fileList: FileList | null) => {
@@ -84,7 +76,6 @@ const CellCountingV8: React.FC = () => {
     setBatchProgress((p: { processed: number; total: number }) => ({ processed: p.processed, total: prevTotal(batchItems, newItems.length) }));
   };
 
-  // Camera capture handler (single photo -> add to batch)
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -222,7 +213,7 @@ const CellCountingV8: React.FC = () => {
   };
 
   const currentBatchProcessed = currentBatchItem && currentBatchItem.result ? processDetections(currentBatchItem.result.detections, currentBatchItem.manualDetections) : [];
-  const availableClasses = useMemo(() => [...CLASS_TOGGLES], []);
+  const availableClasses = CLASS_TOGGLES;
   const batchAggregated = useMemo(() => {
     let alive = 0, dead = 0;
     batchItems.forEach((it: BatchItem) => {

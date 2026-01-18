@@ -6,17 +6,15 @@ import HeroVideo from '../components/HeroVideo';
 const LandingPage = () => {
   return (
     <div className="min-h-screen">
-      {/* Video Hero Section */}
       <HeroVideo
-        videoSrc="/media/hero-cells.mp4" // PLACE your video under public/media/
-        poster="/media/hero-poster.jpg"   // Optional poster image
+        videoSrc="/media/hero-cells.mp4"
+        poster="/media/hero-poster.jpg"
         heading={<><span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-200 to-emerald-300">AI-Powered</span><span className="block">Cell Counting & Analysis</span></>}
           subheading="Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams."
           primaryCta={{ label: 'Start Counting', to: '/cell-counting-v8' }}
         secondaryCta={{ label: 'Learn More', to: '/about' }}
       />
 
-      {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -72,7 +70,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Use Cases Section */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -154,7 +151,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20 bg-teal-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">

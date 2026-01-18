@@ -16,7 +16,7 @@ RUN npm run build
 # Stage 2: Runtime (static file server)
 FROM nginx:1.27-alpine AS runner
 
-LABEL org.opencontainers.image.source="https://github.com/Twaal/low-key-vision" \
+LABEL org.opencontainers.image.source="https://github.com/Twaal/lowkey-vision" \
       org.opencontainers.image.description="Lowkey Vision Frontend" \
       org.opencontainers.image.licenses="agpl-3.0"
 

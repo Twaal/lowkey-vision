@@ -6,7 +6,7 @@ interface ImageUploadProps {
   isAnalyzing: boolean;
   onReset: () => void;
   hasResult: boolean;
-  guidelines?: React.ReactNode; // Optional custom guidelines content
+  guidelines?: React.ReactNode;
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -23,7 +23,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): string | null => {
-    const maxSize = 20 * 1024 * 1024; // 20MB
+    const maxSize = 20 * 1024 * 1024;
     const allowedTypes = ['image/jpeg', 'image/png', 'image/tiff'];
 
     if (file.size > maxSize) {
@@ -103,7 +103,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Upload Area */}
       {!selectedFile && (
         <div
           className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors duration-200 cursor-pointer ${
@@ -141,7 +140,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       )}
 
-      {/* Error Display */}
       {error && (
         <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg">
           <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
@@ -149,7 +147,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       )}
 
-      {/* File Preview */}
       {selectedFile && previewUrl && (
         <div className="bg-gray-50 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
@@ -189,7 +186,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       )}
 
-      {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
         {selectedFile && (
           <button
@@ -222,7 +218,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         )}
       </div>
 
-      {/* Upload Guidelines */}
       <div className="bg-blue-50 rounded-lg p-6">
         <h3 className="font-medium text-gray-900 mb-3">Upload Guidelines</h3>
         {guidelines ? (

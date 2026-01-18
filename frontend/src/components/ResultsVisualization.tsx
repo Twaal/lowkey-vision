@@ -30,7 +30,7 @@ const ResultsVisualization: FC<ResultsVisualizationProps> = ({
   return (
     <div className="space-y-4">
       <div className="relative bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="relative h-64">  {/* Match ImageUpload preview height */}
+        <div className="relative h-64">
           <div className="relative w-full h-full">
             <img
               src={result.originalImage}
@@ -47,7 +47,6 @@ const ResultsVisualization: FC<ResultsVisualizationProps> = ({
         </div>
       </div>
       
-      {/* Basic Stats */}
       <div className="p-4 bg-gray-50 rounded-lg">
         <div className="text-sm">
           <div className="flex justify-between mb-2">

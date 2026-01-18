@@ -6,7 +6,6 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
         <div className="text-center mb-20">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Focused Cell Analytics For
@@ -19,7 +18,6 @@ const AboutPage = () => {
           </p>
         </div>
 
-        {/* Mission Section */}
         <div className="mb-20">
           <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-2xl p-12">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -67,7 +65,6 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* Technology Section */}
         <div className="mb-20">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Purpose-Built Stack For Cell Quantification
@@ -112,7 +109,6 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* Vision Section */}
         <div className="mb-20">
           <div className="bg-gray-50 rounded-2xl p-12">
             <div className="text-center">
@@ -154,7 +150,6 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* CTA Section */}
         <div className="text-center">
           <div className="bg-teal-600 rounded-2xl p-12 text-white">
             <h2 className="text-3xl font-bold mb-6">

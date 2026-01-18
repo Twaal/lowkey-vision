@@ -23,8 +23,7 @@ interface OverlayProps {
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void;
   annotationMode?: boolean;
   onNewBox?: (bbox: [number, number, number, number]) => void;
-  autoFit?: boolean; // auto scale image to fit container on first load
-  /** When false, heavy work (image load & detection rendering) is skipped. Useful in batch lists */
+  autoFit?: boolean;
   isActive?: boolean;
 }
 
@@ -79,34 +78,29 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   );
   const [isPanning, setIsPanning] = useState(false);
   const hasAutoFit = useRef(false);
-  // If parent doesn't control scale, maintain an internal one so autoFit & wheel zoom still work
   const isControlled = (onScaleChange !== undefined && scale !== undefined);
   const [internalScale, setInternalScale] = useState<number>(scale ?? 1);
   const effectiveScale = isControlled ? (scale as number) : internalScale;
-  // Offscreen canvases (kept small / reused)
-  const baseLayerRef = useRef<HTMLCanvasElement | null>(null); // image only
-  const detLayerRef = useRef<HTMLCanvasElement | null>(null); // detections (boxes + labels)
+  const baseLayerRef = useRef<HTMLCanvasElement | null>(null);
+  const detLayerRef = useRef<HTMLCanvasElement | null>(null);
   const detLayerDirty = useRef(true);
   const [imageDims, setImageDims] = useState<{w:number;h:number}|null>(null);
   const lastReadySigRef = useRef<string>('');
 
-  // Reset autofit flag when image changes
   useEffect(() => { hasAutoFit.current = false; }, [imageUrl]);
 
-  // Load image only when imageUrl or isActive changes
   useEffect(() => {
-    if (!isActive) return; // skip heavy work when inactive
+    if (!isActive) return;
     const img = new Image();
     imgRef.current = img;
     img.onload = () => {
       imageDims && imageDims.w === img.width && imageDims.h === img.height ? null : setImageDims({w: img.width, h: img.height});
-      // Prepare offscreen base layer
       if (!baseLayerRef.current) baseLayerRef.current = document.createElement('canvas');
       const base = baseLayerRef.current;
       base.width = img.width; base.height = img.height;
       const bctx = base.getContext('2d');
       if (bctx) { bctx.clearRect(0,0,base.width,base.height); bctx.drawImage(img,0,0); }
-      detLayerDirty.current = true; // need to redraw detections after new image
+      detLayerDirty.current = true;
       maybeAutoFit(img.width, img.height);
       compositeFrame();
     };
@@ -119,11 +113,9 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     const container = containerRef.current;
     if (!container) return;
     const availW = container.clientWidth || window.innerWidth;
-    // Prefer container height, but fall back to viewport with some margin; don't hard-cap at 900
     const availH = container.clientHeight || Math.max(200, window.innerHeight - 200);
     const scaleW = availW / w;
     const scaleH = availH / h;
-    // Allow upscaling small images as well; clamp to a sane range
     const unclamped = Math.min(scaleW, scaleH);
     const fitScale = Math.max(0.2, Math.min(unclamped, 5));
     const curr = effectiveScale || 1;
@@ -139,7 +131,6 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     }
   };
 
-  // Redraw detection layer when detection-related props change
   useEffect(() => {
     if (!isActive) return;
     detLayerDirty.current = true;
@@ -195,7 +186,6 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   const compositeFrame = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    // Resize visible canvas to image dimensions once known
     if (baseLayerRef.current && (canvas.width !== baseLayerRef.current.width || canvas.height !== baseLayerRef.current.height)) {
       canvas.width = baseLayerRef.current.width;
       canvas.height = baseLayerRef.current.height;
@@ -216,7 +206,6 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
       strokeRoundedRect(ctx, dx1, dy1, dx2 - dx1, dy2 - dy1, r);
       ctx.restore();
     }
-    // Fire onCanvasReady only when underlying static content changed (avoid spamming during drag)
     if (onCanvasReady && !draftRect) {
       const sig = `${imageUrl}|${detections.length}|${showBoxes}|${showLabels}|${minScore}`;
       if (sig !== lastReadySigRef.current) {
@@ -226,10 +215,8 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     }
   };
 
-  // Re-composite when draftRect changes (fast path while dragging)
   useEffect(() => { if (isActive) compositeFrame(); /* eslint-disable-next-line */ }, [draftRect]);
 
-  // Wheel zoom (ctrl/meta + wheel)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -244,7 +231,6 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     return () => el.removeEventListener('wheel', handler);
   }, [effectiveScale, isControlled, onScaleChange]);
 
-  // Drag-to-pan (when not annotating)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -282,7 +268,6 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     };
   }, [annotationMode]);
 
-  // Annotation drawing
   useEffect(() => {
     if (!annotationMode) return;
     const canvas = canvasRef.current;
@@ -347,28 +332,22 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   );
 };
 
-// Custom props equality to skip re-renders when parent changes unrelated state
 function areEqual(prev: Readonly<OverlayProps>, next: Readonly<OverlayProps>): boolean {
-  // If inactive state toggled we should allow re-render when becoming active
   if (prev.isActive !== next.isActive) return false;
   if (prev.imageUrl !== next.imageUrl) return false;
   if (prev.showBoxes !== next.showBoxes) return false;
   if (prev.showLabels !== next.showLabels) return false;
   if (prev.minScore !== next.minScore) return false;
-  if (prev.scale !== next.scale) return false; // scale transforms container only, but safer to redraw
+  if (prev.scale !== next.scale) return false;
   if (prev.annotationMode !== next.annotationMode) return false;
   if (prev.strokeWidth !== next.strokeWidth) return false;
-  // IMPORTANT: when the annotation callback changes (e.g., selected class updated),
-  // we must re-render to rebind event handlers so new annotations use the latest class.
   if (prev.onNewBox !== next.onNewBox) return false;
-  // Compare selected class sets (sizes + membership)
   const prevSel = prev.selectedClasses; const nextSel = next.selectedClasses;
   if (prevSel || nextSel) {
     if (!prevSel || !nextSel) return false;
     if (prevSel.size !== nextSel.size) return false;
     for (const c of prevSel) if (!nextSel.has(c)) return false;
   }
-  // Shallow compare detections array by length & ids (id fallback to bbox join)
   const pd = prev.detections; const nd = next.detections;
   if (pd.length !== nd.length) return false;
   for (let i=0;i<pd.length;i++) {
@@ -377,7 +356,6 @@ function areEqual(prev: Readonly<OverlayProps>, next: Readonly<OverlayProps>): b
     const bid = b.id || b.bbox.join(',');
     if (aid !== bid || a.score !== b.score || a.class_id !== b.class_id) return false;
   }
-  // Ignore function identity changes (parent should use useCallback ideally)
   return true;
 }
 

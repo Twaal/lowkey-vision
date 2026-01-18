@@ -12,7 +12,6 @@ const Navbar = () => {
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-12">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="p-1.5 bg-teal-600 rounded-md group-hover:bg-teal-700 transition-colors duration-200">
               <Eye className="h-4 w-4 text-white" />
@@ -20,7 +19,6 @@ const Navbar = () => {
             <span className="text-lg font-bold text-gray-900">Lowkey Vision</span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             <Link
               to="/cell-counting-v8"
@@ -50,7 +48,6 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Mobile menu button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden p-1.5 rounded-md text-gray-700 hover:text-teal-600 hover:bg-gray-100 transition-colors duration-200"
@@ -63,7 +60,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
             <div className="space-y-3">

@@ -28,7 +28,6 @@ import cv2
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-# Ultralytics YOLOv8
 from ultralytics import YOLO
 from huggingface_hub import hf_hub_download
 
@@ -83,7 +82,6 @@ def ensure_weights() -> Path:
 def warm_start_model():
     try:
         model = get_model()
-        # warm-up with a dummy image
         dummy = np.zeros((640, 640, 3), dtype=np.uint8)
         model.predict(source=dummy, imgsz=640, conf=0.25, iou=0.45, verbose=False)
     except Exception as e:  # pragma: no cover
@@ -99,9 +97,7 @@ def decode_image(contents: bytes) -> np.ndarray:
 
 
 def prepare_detections_from_results(results, min_bbox_size: Optional[int]) -> Dict[str, Any]:
-    # results is a list with one element for single image
     r = results[0]
-    # Boxes: xyxy, conf, cls
     boxes = r.boxes
     if boxes is None:
         dets: List[Dict[str, Any]] = []
@@ -119,10 +115,8 @@ def prepare_detections_from_results(results, min_bbox_size: Optional[int]) -> Di
             cid = int(c)
             cname = None
             try:
-                # Ultralytics stores names dict on model and results
                 names = r.names if hasattr(r, 'names') and r.names else (getattr(r, 'model', None).names if hasattr(r, 'model') else None)
                 if names is not None:
-                    # names can be list or dict
                     if isinstance(names, dict):
                         cname = names.get(cid, str(cid))
                     elif isinstance(names, list) and cid < len(names):
@@ -136,7 +130,6 @@ def prepare_detections_from_results(results, min_bbox_size: Optional[int]) -> Di
                 "class_name": str(cname) if cname is not None else str(cid),
             })
 
-    # counts and viability
     counts: Dict[str, int] = {}
     for d in dets:
         name = d["class_name"]

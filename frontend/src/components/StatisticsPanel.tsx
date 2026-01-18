@@ -99,7 +99,6 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Main Statistics */}
       <div className="space-y-4">
         {statisticsData.map((stat, index) => (
           <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -118,7 +117,6 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
         ))}
       </div>
 
-      {/* Detailed Statistics */}
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Detailed Metrics</h3>
         <div className="space-y-3 text-sm">
@@ -149,7 +147,6 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
         </div>
       </div>
 
-      {/* Analysis Info */}
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Analysis Details</h3>
         <div className="space-y-3 text-sm">
@@ -168,7 +165,6 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
         </div>
       </div>
 
-      {/* Export Button */}
       <div className="border-t border-gray-200 pt-6">
         <button
           onClick={handleDownloadCSV}
@@ -179,7 +175,6 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
         </button>
       </div>
 
-      {/* Visual Summary */}
       <div className="bg-teal-50 rounded-lg p-4">
         <h4 className="font-medium text-teal-900 mb-3">Quick Summary</h4>
         <div className="text-sm text-teal-800 space-y-2">

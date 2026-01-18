@@ -1,21 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface HeroVideoProps {
-  videoSrc: string;            // path in public (e.g. /media/hero-cells.mp4)
-  poster?: string;             // fallback poster image
-  heading: React.ReactNode;    // main heading (can include spans styling)
-  subheading?: string;         // supporting text
+  videoSrc: string;
+  poster?: string;
+  heading: React.ReactNode;
+  subheading?: string;
   primaryCta?: { label: string; to: string };
   secondaryCta?: { label: string; to: string };
   className?: string;
-  overlay?: boolean;           // add gradient overlay
-  autoPlay?: boolean;          // default true (will disable if prefers-reduced-motion)
-  loop?: boolean;              // default true
+  overlay?: boolean;
+  autoPlay?: boolean;
+  loop?: boolean;
 }
 
-// Lightweight hero with background looping video and interactive mute toggle
 const HeroVideo: React.FC<HeroVideoProps> = ({
   videoSrc,
   poster,
@@ -28,12 +27,9 @@ const HeroVideo: React.FC<HeroVideoProps> = ({
   autoPlay = true,
   loop = true,
 }: HeroVideoProps) => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  // Video kept permanently muted (autoplay policy & minimal UI)
   const [usePosterOnly, setUsePosterOnly] = useState(false);
 
-  // Respect prefers-reduced-motion
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (reduce.matches) setUsePosterOnly(true);
@@ -46,11 +42,9 @@ const HeroVideo: React.FC<HeroVideoProps> = ({
   const onError = () => setUsePosterOnly(true);
 
   return (
-    <section className={`relative h-[640px] w-full flex items-center justify-center overflow-hidden ${className}`}>      
-      {/* Background video / poster */}
+    <section className={`relative h-[640px] w-full flex items-center justify-center overflow-hidden ${className}`}>
       {!usePosterOnly && (
         <video
-          ref={videoRef}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           src={videoSrc}
           poster={poster}
@@ -74,7 +68,6 @@ const HeroVideo: React.FC<HeroVideoProps> = ({
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-slate-900/50 to-teal-900/40 mix-blend-multiply" />
       )}
 
-      {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 text-center text-white">
         <h1 className="font-extrabold tracking-tight text-4xl md:text-6xl leading-tight drop-shadow-lg">
           {heading}
@@ -102,7 +95,6 @@ const HeroVideo: React.FC<HeroVideoProps> = ({
               {secondaryCta.label}
             </Link>
           )}
-          {/* Mute toggle removed (always muted) */}
         </div>
         {!isLoaded && !usePosterOnly && (
           <div className="mt-6 inline-flex items-center text-xs uppercase tracking-widest text-white/60 animate-pulse">
@@ -111,7 +103,6 @@ const HeroVideo: React.FC<HeroVideoProps> = ({
         )}
       </div>
 
-      {/* Decorative subtle grid */}
       <div className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(circle_at_center,white,transparent)] opacity-30">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:56px_56px]" />
       </div>
