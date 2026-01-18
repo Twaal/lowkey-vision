@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Eye } from 'lucide-react';
+import { Menu, X, Eye, Github } from 'lucide-react';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -46,6 +46,15 @@ const Navbar = () => {
             >
               Contact
             </Link>
+            <a
+              href="https://github.com/Twaal/lowkey-vision"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Lowkey Vision on GitHub"
+              className="p-1.5 rounded-md text-gray-600 hover:text-teal-600 hover:bg-gray-100 transition-colors duration-200"
+            >
+              <Github className="h-4 w-4" />
+            </a>
           </div>
 
           <button
@@ -86,6 +95,17 @@ const Navbar = () => {
               >
                 Contact
               </Link>
+              <a
+                href="https://github.com/Twaal/lowkey-vision"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Lowkey Vision on GitHub"
+                className="mx-3 inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-gray-700 hover:text-teal-600 hover:border-teal-200 transition-colors duration-200 font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Github className="h-4 w-4" />
+                GitHub
+              </a>
             </div>
           </div>
         )}
