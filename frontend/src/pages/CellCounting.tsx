@@ -42,13 +42,13 @@ const CellCounting: React.FC = () => {
   const [showLabels, setShowLabels] = useState<boolean>(storedSettings?.showLabels ?? true);
   // UPDATED defaults: score 50%, min area 10 px^2, IOU 0.01
   const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.5);
-  // Default: show all known classes (Alive, Dead) instead of none
-  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set(['Alive','Dead']));
+  // Default: show all known classes (live, dead) instead of none
+  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set(['live','dead']));
   const [strokeWidth, setStrokeWidth] = useState<number>(storedSettings?.strokeWidth ?? 3);
   const [scale, setScale] = useState(1);
   // Manual annotation state
   const [annotationMode, setAnnotationMode] = useState(false);
-  const [newBoxClass, setNewBoxClass] = useState('Alive');
+  const [newBoxClass, setNewBoxClass] = useState('live');
   // Advanced filtering
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10); // pixels (UPDATED default)
@@ -135,7 +135,7 @@ const CellCounting: React.FC = () => {
   const computeCounts = (detections: DetectionBox[]) => {
     const counts: Record<string, number> = {};
     detections.forEach(d => { counts[d.class_name] = (counts[d.class_name]||0)+1; });
-    const alive = counts['Alive']||0; const dead = counts['Dead']||0; const viability = (alive+dead)>0 ? alive/(alive+dead)*100 : null;
+    const alive = counts['live']||0; const dead = counts['dead']||0; const viability = (alive+dead)>0 ? alive/(alive+dead)*100 : null;
     return { counts, alive, dead, viability };
   };
 
@@ -211,7 +211,7 @@ const CellCounting: React.FC = () => {
     const newDet: DetectionBox = {
       bbox,
       score: 0.999,
-      class_id: newBoxClass === 'Alive' ? 0 : 1,
+      class_id: newBoxClass === 'live' ? 0 : 1,
       class_name: newBoxClass,
       id: 'manual-batch-' + currentBatchItem.id + '-' + Date.now() + '-' + Math.random().toString(36).slice(2),
       isManual: true
@@ -231,7 +231,7 @@ const CellCounting: React.FC = () => {
     batchItems.forEach((it: BatchItem) => {
       if (!it.result) return;
       const processed = processDetections(it.result.detections, it.manualDetections);
-      processed.forEach((d: DetectionBox) => { if (d.class_name === 'Alive') alive++; else if (d.class_name === 'Dead') dead++; });
+      processed.forEach((d: DetectionBox) => { if (d.class_name === 'live') alive++; else if (d.class_name === 'dead') dead++; });
     });
     const total = alive + dead;
     const viability = total > 0 ? alive/total*100 : null;
@@ -241,7 +241,7 @@ const CellCounting: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">Cell Counter</h1>
-      <p className="text-gray-600 mb-6 text-sm leading-relaxed">Upload multiple brightfield Trypan blue stained images for batch detection of Alive / Dead cells and viability estimation. This demo runs our latest model over all selected files.</p>
+      <p className="text-gray-600 mb-6 text-sm leading-relaxed">Upload multiple brightfield Trypan blue stained images for batch detection of live / dead cells and viability estimation. This demo runs our latest model over all selected files.</p>
         <div className="space-y-8">
           <div className="bg-white border rounded p-6">
             <h2 className="font-semibold mb-4 flex items-center gap-2"><FolderOpen className="w-5 h-5"/>Batch Images</h2>
@@ -302,8 +302,8 @@ const CellCounting: React.FC = () => {
                   </tbody>
                 </table>
                 <div className="p-3 bg-gray-50 flex flex-wrap gap-6 text-[11px] border-t">
-                  <div><span className="font-semibold">Batch Alive:</span> {batchAggregated.alive}</div>
-                  <div><span className="font-semibold">Batch Dead:</span> {batchAggregated.dead}</div>
+                  <div><span className="font-semibold">Batch live:</span> {batchAggregated.alive}</div>
+                  <div><span className="font-semibold">Batch dead:</span> {batchAggregated.dead}</div>
                   <div><span className="font-semibold">Total:</span> {batchAggregated.total}</div>
                   <div><span className="font-semibold">Viability:</span> {batchAggregated.viability!==null? batchAggregated.viability.toFixed(1)+'%':', '}</div>
                   <div className="text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</div>

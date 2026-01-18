@@ -333,19 +333,19 @@ def get_pred_info(image_path, bboxes, output_path, show=False, write=True, show_
         class_dict[label] = class_dict[label] + 1
 
     if show_details:
-        viability = 100 * class_dict['Alive'] / (class_dict['Alive'] + class_dict['Dead'])
+        viability = 100 * class_dict['live'] / (class_dict['live'] + class_dict['dead'])
         viability_str = "%.1f%%" % viability
         cv2.putText(image, os.path.basename(image_path), (10, 20), cv2.FONT_HERSHEY_PLAIN, 1,
                     (0, 0, 0), 3, lineType=cv2.LINE_8)
         cv2.putText(image, os.path.basename(image_path), (10, 20), cv2.FONT_HERSHEY_PLAIN, 1,
                     (255, 255, 255), 1, lineType=cv2.LINE_8)
-        cv2.putText(image, 'Dead: ' + str(class_dict['Dead']), (10, 40), cv2.FONT_HERSHEY_PLAIN, 1,
+        cv2.putText(image, 'dead: ' + str(class_dict['dead']), (10, 40), cv2.FONT_HERSHEY_PLAIN, 1,
                     (0, 0, 0), 3, lineType=cv2.LINE_8)
-        cv2.putText(image, 'Dead: ' + str(class_dict['Dead']), (10, 40), cv2.FONT_HERSHEY_PLAIN, 1,
+        cv2.putText(image, 'dead: ' + str(class_dict['dead']), (10, 40), cv2.FONT_HERSHEY_PLAIN, 1,
                     (255, 255, 255), 1, lineType=cv2.LINE_8)
-        cv2.putText(image, 'Alive: ' + str(class_dict['Alive']), (10, 60), cv2.FONT_HERSHEY_PLAIN, 1,
+        cv2.putText(image, 'live: ' + str(class_dict['live']), (10, 60), cv2.FONT_HERSHEY_PLAIN, 1,
                     (0, 0, 0), 3, lineType=cv2.LINE_8)
-        cv2.putText(image, 'Alive: ' + str(class_dict['Alive']), (10, 60), cv2.FONT_HERSHEY_PLAIN, 1,
+        cv2.putText(image, 'live: ' + str(class_dict['live']), (10, 60), cv2.FONT_HERSHEY_PLAIN, 1,
                     (255, 255, 255), 1, lineType=cv2.LINE_8)
         cv2.putText(image, 'Viability: ' + viability_str, (10, 80), cv2.FONT_HERSHEY_PLAIN, 1,
                     (0, 0, 0), 3, lineType=cv2.LINE_8)

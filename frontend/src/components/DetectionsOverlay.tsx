@@ -264,8 +264,12 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   }, [annotationMode, effectiveScale, draftRect, onNewBox, isActive]);
 
   return (
-    <div ref={containerRef} className="w-full overflow-auto border rounded bg-neutral-50 relative max-h-[900px]" style={{ cursor: annotationMode ? 'crosshair' : 'grab' }}>
-  <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: 'top left', display: 'inline-block' }}>
+    <div
+      ref={containerRef}
+      className="w-full overflow-auto border rounded bg-neutral-50 relative max-h-[calc(100vh-220px)] h-[calc(100vh-220px)] min-h-[320px]"
+      style={{ cursor: annotationMode ? 'crosshair' : 'grab' }}
+    >
+      <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: 'top left', display: 'inline-block' }}>
         <canvas ref={canvasRef} className="object-contain" />
       </div>
       {annotationMode && (

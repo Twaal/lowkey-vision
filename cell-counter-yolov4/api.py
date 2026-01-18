@@ -7,7 +7,7 @@ POST /predict accepts an uploaded image and returns JSON with detections:
   "detections": [
      {"bbox": [x1,y1,x2,y2], "score": float, "class_id": int, "class_name": str}
   ],
-  "counts": {"Alive": int, "Dead": int},
+  "counts": {"live": int, "dead": int},
   "viability": float (0-100)
 }
 """
@@ -139,9 +139,9 @@ def prepare_detections(bboxes: np.ndarray) -> Dict[str, Any]:
             "class_id": cls_id,
             "class_name": name,
         })
-    # Compute viability if Alive/Dead present
-    alive = counts.get("Alive", 0)
-    dead = counts.get("Dead", 0)
+    # Compute viability if live/dead present
+    alive = counts.get("live", 0)
+    dead = counts.get("dead", 0)
     viability = (alive / (alive + dead) * 100.0) if (alive + dead) > 0 else None
     return {
         "model": YOLO_TYPE,

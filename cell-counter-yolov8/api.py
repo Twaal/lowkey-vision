@@ -7,7 +7,7 @@ POST /predict accepts an uploaded image and returns JSON with detections:
   "detections": [
      {"bbox": [x1,y1,x2,y2], "score": float, "class_id": int, "class_name": str}
   ],
-  "counts": {"Alive": int, "Dead": int},
+  "counts": {"live": int, "dead": int},
   "viability": float (0-100)
 }
 
@@ -120,8 +120,8 @@ def prepare_detections_from_results(results, min_bbox_size: Optional[int]) -> Di
     for d in dets:
         name = d["class_name"]
         counts[name] = counts.get(name, 0) + 1
-    alive = counts.get("Alive", 0)
-    dead = counts.get("Dead", 0)
+    alive = counts.get("live", 0)
+    dead = counts.get("dead", 0)
     viability = (alive / (alive + dead) * 100.0) if (alive + dead) > 0 else None
 
     return {

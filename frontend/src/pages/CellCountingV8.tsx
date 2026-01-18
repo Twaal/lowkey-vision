@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import DetectionsOverlay, { DetectionBox } from '../components/DetectionsOverlay';
 import OverlayControls from '../components/OverlayControls';
-import { Download, FolderOpen, Play, Pause, ChevronLeft, ChevronRight, Camera } from 'lucide-react';
+import { Download, FolderOpen, Play, Pause, ChevronLeft, ChevronRight, Camera, Trash2 } from 'lucide-react';
 
 interface PredictionResponse {
   model: string;
@@ -41,16 +41,17 @@ const CellCountingV8: React.FC = () => {
   const [showBoxes, setShowBoxes] = useState<boolean>(storedSettings?.showBoxes ?? true);
   const [showLabels, setShowLabels] = useState<boolean>(storedSettings?.showLabels ?? true);
   const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.5);
-  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set(['Alive','Dead']));
+  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
   const [strokeWidth, setStrokeWidth] = useState<number>(storedSettings?.strokeWidth ?? 3);
   const [scale, setScale] = useState(1);
   // Manual annotation state
   const [annotationMode, setAnnotationMode] = useState(false);
-  const [newBoxClass, setNewBoxClass] = useState('Alive');
+  const [newBoxClass, setNewBoxClass] = useState('live');
   // Advanced filtering
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10);
   const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01);
+  const [showTools, setShowTools] = useState(true);
 
   // Persist settings on change
   useEffect(() => {
@@ -129,7 +130,7 @@ const CellCountingV8: React.FC = () => {
   const computeCounts = (detections: DetectionBox[]) => {
     const counts: Record<string, number> = {};
     detections.forEach(d => { counts[d.class_name] = (counts[d.class_name]||0)+1; });
-    const alive = counts['Alive']||0; const dead = counts['Dead']||0; const viability = (alive+dead)>0 ? alive/(alive+dead)*100 : null;
+    const alive = counts['live']||0; const dead = counts['dead']||0; const viability = (alive+dead)>0 ? alive/(alive+dead)*100 : null;
     return { counts, alive, dead, viability };
   };
 
@@ -200,7 +201,7 @@ const CellCountingV8: React.FC = () => {
     const newDet: DetectionBox = {
       bbox,
       score: 0.999,
-      class_id: newBoxClass === 'Alive' ? 0 : 1,
+      class_id: newBoxClass === 'live' ? 0 : 1,
       class_name: newBoxClass,
       id: 'manual-batch-' + currentBatchItem.id + '-' + Date.now() + '-' + Math.random().toString(36).slice(2),
       isManual: true
@@ -214,12 +215,20 @@ const CellCountingV8: React.FC = () => {
   };
 
   const currentBatchProcessed = currentBatchItem && currentBatchItem.result ? processDetections(currentBatchItem.result.detections, currentBatchItem.manualDetections) : [];
+  const availableClasses = useMemo(() => Array.from(new Set(currentBatchProcessed.map((d: DetectionBox) => d.class_name))), [currentBatchProcessed]);
+  useEffect(() => {
+    if (!availableClasses.length) return;
+    const hasOverlap = availableClasses.some((name: string) => selectedClasses.has(name));
+    if (!hasOverlap) {
+      setSelectedClasses(new Set(availableClasses));
+    }
+  }, [availableClasses, selectedClasses]);
   const batchAggregated = useMemo(() => {
     let alive = 0, dead = 0;
     batchItems.forEach((it: BatchItem) => {
       if (!it.result) return;
       const processed = processDetections(it.result.detections, it.manualDetections);
-      processed.forEach((d: DetectionBox) => { if (d.class_name === 'Alive') alive++; else if (d.class_name === 'Dead') dead++; });
+      processed.forEach((d: DetectionBox) => { if (d.class_name === 'live') alive++; else if (d.class_name === 'dead') dead++; });
     });
     const total = alive + dead;
     const viability = total > 0 ? alive/total*100 : null;
@@ -227,43 +236,90 @@ const CellCountingV8: React.FC = () => {
   }, [batchItems, processDetections]);
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">Cell Counter</h1>
-      <p className="text-gray-600 mb-6 text-sm leading-relaxed">Upload multiple brightfield Trypan blue stained images for batch detection of Alive / Dead cells and viability estimation. This demo runs our latest model over all selected files.</p>
-        <div className="space-y-8">
-          <div className="bg-white border rounded p-6">
-            <h2 className="font-semibold mb-4 flex items-center gap-2"><FolderOpen className="w-5 h-5"/>Batch Images</h2>
-            <div className="flex flex-wrap gap-4 items-center text-sm">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Select Files</label>
-                <input type="file" multiple accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleBatchFiles(e.target.files)} className="text-xs" />
+    <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="mb-4 sticky top-12 z-40 flex flex-wrap items-center gap-3 bg-white border rounded px-3 py-2">
+        <div className="flex items-center gap-2">
+          <FolderOpen className="w-4 h-4 text-gray-600" />
+          <label className="text-xs font-medium text-gray-600">Upload</label>
+          <input type="file" multiple accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleBatchFiles(e.target.files)} className="text-xs" />
+        </div>
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          // @ts-ignore
+          capture="environment"
+          onChange={handleCameraCapture}
+          className="hidden"
+        />
+        <button
+          type="button"
+          onClick={() => cameraInputRef.current?.click()}
+          disabled={batchRunning}
+          className="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-xs bg-white hover:bg-gray-50 disabled:opacity-50"
+          title="Open camera to take a photo and add to batch"
+        >
+          <Camera className="w-4 h-4"/> Take Photo
+        </button>
+        <button onClick={runBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-teal-600 text-white rounded disabled:bg-gray-400"><Play className="w-4 h-4"/>{batchRunning?'Running...':'Start Batch'}</button>
+        <button onClick={clearBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50 disabled:opacity-50"><Trash2 className="w-4 h-4"/>Clear Batch</button>
+        <button
+          type="button"
+          onClick={() => setShowTools((v: boolean) => !v)}
+          className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+        >
+          {showTools ? 'Hide Tools' : 'Show Tools'}
+        </button>
+        {batchItems.length>0 && (
+          <div className="text-[11px] text-gray-600">Progress: {batchProgress.processed}/{batchItems.length}</div>
+        )}
+      </div>
+
+      <div className={`grid grid-cols-1 ${showTools ? 'lg:grid-cols-[minmax(0,1fr)_320px]' : ''} gap-4`}>
+        <div className="space-y-4">
+          {currentBatchItem ? (
+            currentBatchItem.result ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-white border rounded px-3 py-2">
+                  <div className="text-sm font-medium truncate">Image {batchIndex+1} / {batchItems.length}: {currentBatchItem.file.name}</div>
+                  <div className="flex gap-2">
+                    <button onClick={()=>setBatchIndex((i: number)=>Math.max(0,i-1))} disabled={batchIndex===0} className="p-2 border rounded disabled:opacity-40"><ChevronLeft className="w-4 h-4"/></button>
+                    <button onClick={()=>setBatchIndex((i: number)=>Math.min(batchItems.length-1,i+1))} disabled={batchIndex===batchItems.length-1} className="p-2 border rounded disabled:opacity-40"><ChevronRight className="w-4 h-4"/></button>
+                  </div>
+                </div>
+                <div className="bg-white border rounded p-2">
+                  <DetectionsOverlay
+                    imageUrl={currentBatchItem.url}
+                    detections={currentBatchProcessed.filter((d: DetectionBox)=>selectedClasses.has(d.class_name))}
+                    showBoxes={showBoxes}
+                    showLabels={showLabels}
+                    minScore={minScore}
+                    strokeWidth={strokeWidth}
+                    scale={scale}
+                    onScaleChange={setScale}
+                    selectedClasses={selectedClasses}
+                    onCanvasReady={(c: HTMLCanvasElement | null)=>captureOverlay(c?.toDataURL())}
+                    annotationMode={annotationMode}
+                    onNewBox={handleNewManualBoxBatch}
+                  />
+                </div>
               </div>
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                // @ts-ignore
-                capture="environment"
-                onChange={handleCameraCapture}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => cameraInputRef.current?.click()}
-                disabled={batchRunning}
-                className="inline-flex items-center gap-2 px-4 py-2 border rounded bg-white hover:bg-gray-50 disabled:opacity-50"
-                title="Open camera to take a photo and add to batch"
-              >
-                <Camera className="w-4 h-4"/> Take Photo
-              </button>
-              <button onClick={runBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded disabled:bg-gray-400"><Play className="w-4 h-4"/>{batchRunning?'Running...':'Start Batch'}</button>
-              <button onClick={clearBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-4 py-2 border rounded bg-white hover:bg-gray-50 disabled:opacity-50"><Pause className="w-4 h-4"/>Clear</button>
-              {batchItems.length>0 && (
-                <div className="text-xs text-gray-600">Progress: {batchProgress.processed}/{batchItems.length}</div>
-              )}
+            ) : (
+              <div className="p-6 bg-white border rounded text-sm text-gray-600">
+                <div className="animate-pulse mb-2 font-medium">Processing image {batchIndex+1} of {batchItems.length}…</div>
+                <div>This view will update automatically once the first image finishes. The rest will continue processing in the background.</div>
+              </div>
+            )
+          ) : (
+            <div className="p-8 bg-white border rounded text-sm text-gray-600">
+              Add images to begin a batch. You can upload files or capture a photo.
             </div>
-            {batchItems.length>0 && (
-              <div className="mt-6 max-h-60 overflow-auto border rounded">
+          )}
+
+          {batchItems.length>0 && (
+            <div className="border rounded bg-white">
+              <div className="px-3 py-2 border-b text-xs font-semibold text-gray-700">Batch Queue</div>
+              <div className="max-h-56 overflow-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
@@ -277,107 +333,96 @@ const CellCountingV8: React.FC = () => {
                     {batchItems.map((it: BatchItem,i: number) => (
                       <tr key={it.id} className="border-t hover:bg-teal-50 cursor-pointer" onClick={()=>setBatchIndex(i)}>
                         <td className="px-2 py-1">{i+1}</td>
-                        <td className="px-2 py-1 truncate max-w-[200px]">{it.file.name}</td>
+                        <td className="px-2 py-1 truncate max-w-[240px]">{it.file.name}</td>
                         <td className="px-2 py-1">{it.status}</td>
                         <td className="px-2 py-1"><button onClick={(e: React.MouseEvent<HTMLButtonElement>)=>{e.stopPropagation(); removeBatchItem(it.id);}} className="text-red-600">×</button></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <div className="p-3 bg-gray-50 flex flex-wrap gap-6 text-[11px] border-t">
-                  <div><span className="font-semibold">Batch Alive:</span> {batchAggregated.alive}</div>
-                  <div><span className="font-semibold">Batch Dead:</span> {batchAggregated.dead}</div>
-                  <div><span className="font-semibold">Total:</span> {batchAggregated.total}</div>
-                  <div><span className="font-semibold">Viability:</span> {batchAggregated.viability!==null? batchAggregated.viability.toFixed(1)+'%':', '}</div>
-                  <div className="text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</div>
-                </div>
               </div>
-            )}
-          </div>
-          {currentBatchItem && (
-            currentBatchItem.result ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold">Image {batchIndex+1} / {batchItems.length} ,  {currentBatchItem.file.name}</h2>
-                <div className="flex gap-2">
-                  <button onClick={()=>setBatchIndex((i: number)=>Math.max(0,i-1))} disabled={batchIndex===0} className="p-2 border rounded disabled:opacity-40"><ChevronLeft className="w-4 h-4"/></button>
-                  <button onClick={()=>setBatchIndex((i: number)=>Math.min(batchItems.length-1,i+1))} disabled={batchIndex===batchItems.length-1} className="p-2 border rounded disabled:opacity-40"><ChevronRight className="w-4 h-4"/></button>
-                </div>
+              <div className="p-3 bg-gray-50 flex flex-wrap gap-6 text-[11px] border-t">
+                <div><span className="font-semibold">Batch live:</span> {batchAggregated.alive}</div>
+                <div><span className="font-semibold">Batch dead:</span> {batchAggregated.dead}</div>
+                <div><span className="font-semibold">Total:</span> {batchAggregated.total}</div>
+                <div><span className="font-semibold">Viability:</span> {batchAggregated.viability!==null? batchAggregated.viability.toFixed(1)+'%':', '}</div>
+                <div className="text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</div>
               </div>
-              <OverlayControls
-                showAdvanced={showAdvanced}
-                setShowAdvanced={setShowAdvanced}
-                showBoxes={showBoxes} setShowBoxes={setShowBoxes}
-                showLabels={showLabels} setShowLabels={setShowLabels}
-                strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
-                scale={scale} setScale={setScale}
-                annotationMode={annotationMode} setAnnotationMode={setAnnotationMode}
-                newBoxClass={newBoxClass} setNewBoxClass={setNewBoxClass}
-                minScore={minScore} setMinScore={setMinScore}
-                minArea={minArea} setMinArea={setMinArea}
-                iouThreshold={iouThreshold} setIouThreshold={setIouThreshold}
-                availableClasses={currentBatchProcessed.map((d: DetectionBox)=>d.class_name)}
-                selectedClasses={selectedClasses}
-                toggleClass={toggleClass}
-                extraRightButtons={<button onClick={downloadCsv} className="inline-flex items-center gap-1 px-3 py-1 border rounded text-xs bg-white hover:bg-teal-50"><Download className="w-4 h-4"/>CSV</button>}
-                onClearManualAnnotations={() => {
-                  if (!currentBatchItem) return;
-                  setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
-                }}
-              />
-              <DetectionsOverlay
-                imageUrl={currentBatchItem.url}
-                detections={currentBatchProcessed.filter((d: DetectionBox)=>selectedClasses.has(d.class_name))}
-                showBoxes={showBoxes}
-                showLabels={showLabels}
-                minScore={minScore}
-                strokeWidth={strokeWidth}
-                scale={scale}
-                onScaleChange={setScale}
-                selectedClasses={selectedClasses}
-                onCanvasReady={(c: HTMLCanvasElement | null)=>captureOverlay(c?.toDataURL())}
-                annotationMode={annotationMode}
-                onNewBox={handleNewManualBoxBatch}
-              />
-              <div className="bg-white border rounded p-4 text-sm max-w-md">
-                <h3 className="font-medium mb-2">Counts</h3>
-                {(() => {
-                  const filtered = currentBatchProcessed.filter((d: DetectionBox)=>d.score>=minScore && selectedClasses.has(d.class_name));
-                  const { counts, viability } = computeCounts(filtered);
-                  return <>
-                    <ul className="space-y-1">
-                      {Object.entries(counts).map(([k,v]) => (
-                        <li key={k} className="flex justify-between"><span>{k}</span><span className="font-semibold">{v}</span></li>
-                      ))}
-                    </ul>
-                    {viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {viability.toFixed(1)}%</p>}
-                    {currentBatchItem.manualDetections.length>0 && <p className="mt-2 text-xs text-gray-500">{currentBatchItem.manualDetections.length} manual annotation{currentBatchItem.manualDetections.length>1?'s':''} added.</p>}
-                  </>;
-                })()}
-              </div>
-              {currentBatchItem.manualDetections.length>0 && (
-                <div className="bg-white border rounded p-4 text-xs max-w-md">
-                  <h4 className="font-medium mb-2">Manual Annotations</h4>
-                  <ul className="space-y-1 max-h-40 overflow-auto">
-                    {currentBatchItem.manualDetections.map((d: DetectionBox) => (
-                      <li key={d.id} className="flex items-center justify-between gap-2">
-                        <span className="truncate">{d.class_name} [{d.bbox.map((n: number)=>n.toFixed(0)).join(',')}]</span>
-                        <button onClick={()=>d.id && removeBatchManual(d.id!)} className="text-red-600 hover:underline">Remove</button>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-2 text-[10px] text-gray-500">Manual boxes shown dashed.</p>
-                </div>
-              )}
             </div>
-            ) : (
-              <div className="p-8 bg-white border rounded text-sm text-gray-600">
-                <div className="animate-pulse mb-2 font-medium">Processing image {batchIndex+1} of {batchItems.length}…</div>
-                <div>This view will update automatically once the first image finishes. The rest will continue processing in the background.</div>
-              </div>
-            )
           )}
         </div>
+
+        {showTools && (
+          <aside className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-800">Image Tools</h2>
+              <button type="button" onClick={() => setShowTools(false)} className="text-xs px-2 py-1 border rounded hover:bg-gray-50">Hide</button>
+            </div>
+            <OverlayControls
+              density="compact"
+              className="mb-0"
+              showAdvanced={showAdvanced}
+              setShowAdvanced={setShowAdvanced}
+              showBoxes={showBoxes} setShowBoxes={setShowBoxes}
+              showLabels={showLabels} setShowLabels={setShowLabels}
+              strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
+              scale={scale} setScale={setScale}
+              annotationMode={annotationMode} setAnnotationMode={setAnnotationMode}
+              newBoxClass={newBoxClass} setNewBoxClass={setNewBoxClass}
+              minScore={minScore} setMinScore={setMinScore}
+              minArea={minArea} setMinArea={setMinArea}
+              iouThreshold={iouThreshold} setIouThreshold={setIouThreshold}
+              availableClasses={availableClasses}
+              selectedClasses={selectedClasses}
+              toggleClass={toggleClass}
+              extraRightButtons={<button onClick={downloadCsv} className="inline-flex items-center gap-1 px-2.5 py-1 border rounded text-[11px] bg-white hover:bg-teal-50"><Download className="w-4 h-4"/>CSV</button>}
+              onClearManualAnnotations={() => {
+                if (!currentBatchItem) return;
+                setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
+              }}
+            />
+
+            {currentBatchItem && currentBatchItem.result ? (
+              <>
+                <div className="bg-white border rounded p-3 text-xs">
+                  <h3 className="font-medium mb-2">Counts</h3>
+                  {(() => {
+                    const filtered = currentBatchProcessed.filter((d: DetectionBox)=>d.score>=minScore && selectedClasses.has(d.class_name));
+                    const { counts, viability } = computeCounts(filtered);
+                    return <>
+                      <ul className="space-y-1">
+                        {Object.entries(counts).map(([k,v]) => (
+                          <li key={k} className="flex justify-between"><span>{k}</span><span className="font-semibold">{v}</span></li>
+                        ))}
+                      </ul>
+                      {viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {viability.toFixed(1)}%</p>}
+                      {currentBatchItem.manualDetections.length>0 && <p className="mt-2 text-[11px] text-gray-500">{currentBatchItem.manualDetections.length} manual annotation{currentBatchItem.manualDetections.length>1?'s':''} added.</p>}
+                    </>;
+                  })()}
+                </div>
+                {currentBatchItem.manualDetections.length>0 && (
+                  <div className="bg-white border rounded p-3 text-[11px]">
+                    <h4 className="font-medium mb-2">Manual Annotations</h4>
+                    <ul className="space-y-1 max-h-40 overflow-auto">
+                      {currentBatchItem.manualDetections.map((d: DetectionBox) => (
+                        <li key={d.id} className="flex items-center justify-between gap-2">
+                          <span className="truncate">{d.class_name} [{d.bbox.map((n: number)=>n.toFixed(0)).join(',')}]</span>
+                          <button onClick={()=>d.id && removeBatchManual(d.id!)} className="text-red-600 hover:underline">Remove</button>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-[10px] text-gray-500">Manual boxes shown dashed.</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="bg-white border rounded p-3 text-xs text-gray-500">
+                Run the batch to see counts and annotations.
+              </div>
+            )}
+          </aside>
+        )}
+      </div>
     </div>
   );
 };
