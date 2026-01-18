@@ -131,22 +131,22 @@ const LandingPage = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-200">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Clinical Trials</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">RUO & Preclinical Labs</h3>
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                Standardize quantitative cell metrics across multiple sites with consistent, validated AI models.
+                Designed for research use only today. We’re working toward certification to enable broader clinical trial and regulated lab use.
               </p>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
-                  Standardized protocols
+                  No certification dependency
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
-                  Multi-site consistency
+                  Research-first workflows
                 </li>
                 <li className="flex items-center">
                   <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
-                  Manual override options
+                  Certification roadmap underway
                 </li>
               </ul>
             </div>

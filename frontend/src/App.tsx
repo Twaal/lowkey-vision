@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/react';
+// import { Analytics } from '@vercel/analytics/react';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import CellCountingV8 from './pages/CellCountingV8';
@@ -19,7 +19,7 @@ const App: React.FC = () => {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
         </Routes>
-        <Analytics />
+        {/* <Analytics /> */}
       </div>
     </Router>
   );
