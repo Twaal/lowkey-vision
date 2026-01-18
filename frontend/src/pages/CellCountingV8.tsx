@@ -57,6 +57,7 @@ const CellCountingV8: React.FC = () => {
   const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10);
   const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01);
   const [showTools, setShowTools] = useState(true);
+  const [showEarlyAccessModal, setShowEarlyAccessModal] = useState(false);
 
   // Persist settings on change
   useEffect(() => {
@@ -112,6 +113,7 @@ const CellCountingV8: React.FC = () => {
         }
       } catch (e: any) {
         setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'error', error: e.message || 'Failed' } : it));
+        setShowEarlyAccessModal(true);
       }
       processed++;
       setBatchProgress({ processed, total });
@@ -235,6 +237,31 @@ const CellCountingV8: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-4">
+      {showEarlyAccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Early access required</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Cell counting is currently only available to early access users. Apply now and we'll follow up with next steps.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowEarlyAccessModal(false)}
+                className="px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+              >
+                Not now
+              </button>
+              <a
+                href="/contact"
+                className="px-3 py-1.5 text-xs rounded bg-teal-600 text-white hover:bg-teal-700"
+              >
+                Apply for early access
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-4 sticky top-12 z-40 flex flex-wrap items-center gap-3 bg-white border rounded px-3 py-2">
         <div className="flex items-center gap-2">
           <FolderOpen className="w-4 h-4 text-gray-600" />
@@ -337,7 +364,7 @@ const CellCountingV8: React.FC = () => {
                       <tr key={it.id} className="border-t hover:bg-teal-50 cursor-pointer" onClick={()=>setBatchIndex(i)}>
                         <td className="px-2 py-1">{i+1}</td>
                         <td className="px-2 py-1 truncate max-w-[240px]">{it.file.name}</td>
-                        <td className="px-2 py-1">{it.status}</td>
+                        <td className="px-2 py-1">{it.status === 'error' ? 'early access' : it.status}</td>
                         <td className="px-2 py-1"><button onClick={(e: React.MouseEvent<HTMLButtonElement>)=>{e.stopPropagation(); removeBatchItem(it.id);}} className="text-red-600">×</button></td>
                       </tr>
                     ))}
