@@ -1,6 +1,6 @@
 # Cell Counter YOLOv8 microservice
 
-FastAPI service wrapping Ultralytics YOLOv8 for cell counting. Mirrors the YOLOv4 service responses so the frontend can switch between demos.
+FastAPI service wrapping Ultralytics YOLOv8 for cell counting.
 
 ## How to use
 

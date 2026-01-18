@@ -20,17 +20,6 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
 
-  cell-counter-v4:
-    build:
-      context: ./cell-counter-yolov4
-      dockerfile: Dockerfile
-    ports:
-      - "8001:8001"
-    volumes:
-      - ./cell-counter-yolov4:/app
-    environment:
-      - PYTHONUNBUFFERED=1
-
   cell-counter-v8:
     build:
       context: ./cell-counter-yolov8
@@ -39,5 +28,17 @@ services:
       - "8002:8002"
     volumes:
       - ./cell-counter-yolov8:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  cell-counter-cuda:
+    build:
+      context: ./cell-counter-cuda
+      dockerfile: Dockerfile
+    gpus: all
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./cell-counter-cuda:/app
     environment:
       - PYTHONUNBUFFERED=1
