@@ -53,8 +53,12 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
   return (
     <div className={`${isCompact ? 'space-y-2' : 'space-y-3'} bg-white border rounded ${isCompact ? 'p-3' : 'p-4'} ${isCompact ? '' : 'mb-4'} ${className ?? ''}`}>
       <div className={`flex flex-wrap ${isCompact ? 'gap-3' : 'gap-4'} items-center`}>
-        <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className={`${textClass} ${buttonPadding} border rounded hover:bg-gray-50`}>
-          {showAdvanced ? 'Hide Advanced' : 'Advanced'}
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className={`${textClass} ${buttonPadding} border rounded ${showAdvanced ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700' : 'bg-white hover:bg-gray-50'}`}
+        >
+          Advanced
         </button>
         <label className={`flex items-center space-x-2 ${textClass}`}>
           <input type="checkbox" checked={showBoxes} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShowBoxes(e.target.checked)} />
@@ -65,12 +69,12 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
           <span>Show Labels</span>
         </label>
         <label className={`flex items-center space-x-2 ${textClass}`}>
-          <span>BBox {strokeWidth}px</span>
-          <input type="range" min={1} max={8} step={1} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(parseInt(e.target.value))} />
-          <input type="number" min={1} max={8} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(clamp(parseInt(e.target.value)||1,1,8))} className="w-14 border rounded px-1 py-0.5 text-xs" />
+          <span>Bounding Box {strokeWidth}px</span>
+          <input type="range" min={1} max={10} step={1} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(parseInt(e.target.value))} />
+          <input type="number" min={1} max={10} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(clamp(parseInt(e.target.value)||1,1,10))} className="w-14 border rounded px-1 py-0.5 text-xs" />
           <div className="flex flex-col">
-            <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth+1,1,8))} className="text-xs border rounded-t px-1">+</button>
-            <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth-1,1,8))} className="text-xs border rounded-b px-1">-</button>
+            <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth+1,1,10))} className="text-xs border rounded-t px-1">+</button>
+            <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth-1,1,10))} className="text-xs border rounded-b px-1">-</button>
           </div>
         </label>
         <label className={`flex items-center space-x-2 ${textClass}`}>

@@ -30,6 +30,28 @@ interface OverlayProps {
 
 const defaultPalette = ['#10b981', '#ef4444', '#6366f1', '#f59e0b', '#ec4899', '#3b82f6'];
 
+const strokeRoundedRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) => {
+  const r = Math.max(0, Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.arcTo(x + width, y, x + width, y + r, r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.arcTo(x + width, y + height, x + width - r, y + height, r);
+  ctx.lineTo(x + r, y + height);
+  ctx.arcTo(x, y + height, x, y + height - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.stroke();
+};
+
 const DetectionsOverlay: React.FC<OverlayProps> = ({
   imageUrl,
   detections,
@@ -52,6 +74,10 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [draftRect, setDraftRect] = useState<[number, number, number, number] | null>(null);
   const dragState = useRef<{ dragging: boolean; startX: number; startY: number }>({ dragging: false, startX: 0, startY: 0 });
+  const panState = useRef<{ panning: boolean; startX: number; startY: number; startScrollLeft: number; startScrollTop: number }>(
+    { panning: false, startX: 0, startY: 0, startScrollLeft: 0, startScrollTop: 0 }
+  );
+  const [isPanning, setIsPanning] = useState(false);
   const hasAutoFit = useRef(false);
   // If parent doesn't control scale, maintain an internal one so autoFit & wheel zoom still work
   const isControlled = (onScaleChange !== undefined && scale !== undefined);
@@ -141,7 +167,8 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
         if (d.isManual) dctx.setLineDash([4,3]);
         dctx.strokeStyle = color;
         dctx.lineWidth = strokeWidth;
-        dctx.strokeRect(x1,y1,x2-x1,y2-y1);
+        const r = Math.max(2, strokeWidth * 2);
+        strokeRoundedRect(dctx, x1, y1, x2 - x1, y2 - y1, r);
         dctx.restore();
       }
       if (showLabels) {
@@ -185,7 +212,8 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
       ctx.strokeStyle = '#2563eb';
       ctx.lineWidth = strokeWidth;
       ctx.setLineDash([6,4]);
-      ctx.strokeRect(dx1,dy1,dx2-dx1,dy2-dy1);
+      const r = Math.max(2, strokeWidth * 2);
+      strokeRoundedRect(ctx, dx1, dy1, dx2 - dx1, dy2 - dy1, r);
       ctx.restore();
     }
     // Fire onCanvasReady only when underlying static content changed (avoid spamming during drag)
@@ -215,6 +243,44 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     el.addEventListener('wheel', handler, { passive: false });
     return () => el.removeEventListener('wheel', handler);
   }, [effectiveScale, isControlled, onScaleChange]);
+
+  // Drag-to-pan (when not annotating)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handleDown = (e: MouseEvent) => {
+      if (annotationMode) return;
+      if (e.button !== 0) return;
+      panState.current.panning = true;
+      panState.current.startX = e.clientX;
+      panState.current.startY = e.clientY;
+      panState.current.startScrollLeft = el.scrollLeft;
+      panState.current.startScrollTop = el.scrollTop;
+      setIsPanning(true);
+      e.preventDefault();
+    };
+    const handleMove = (e: MouseEvent) => {
+      if (!panState.current.panning) return;
+      const dx = e.clientX - panState.current.startX;
+      const dy = e.clientY - panState.current.startY;
+      el.scrollLeft = panState.current.startScrollLeft - dx;
+      el.scrollTop = panState.current.startScrollTop - dy;
+      e.preventDefault();
+    };
+    const handleUp = () => {
+      if (!panState.current.panning) return;
+      panState.current.panning = false;
+      setIsPanning(false);
+    };
+    el.addEventListener('mousedown', handleDown);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    return () => {
+      el.removeEventListener('mousedown', handleDown);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+  }, [annotationMode]);
 
   // Annotation drawing
   useEffect(() => {
@@ -267,7 +333,7 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     <div
       ref={containerRef}
       className="w-full overflow-auto border rounded bg-neutral-50 relative max-h-[calc(100vh-220px)] h-[calc(100vh-220px)] min-h-[320px]"
-      style={{ cursor: annotationMode ? 'crosshair' : 'grab' }}
+      style={{ cursor: annotationMode ? 'crosshair' : (isPanning ? 'grabbing' : 'grab') }}
     >
       <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: 'top left', display: 'inline-block' }}>
         <canvas ref={canvasRef} className="object-contain" />

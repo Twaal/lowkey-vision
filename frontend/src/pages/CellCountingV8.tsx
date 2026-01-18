@@ -33,15 +33,20 @@ const CellCountingV8: React.FC = () => {
   const currentBatchItem = batchItems[batchIndex];
   // Overlay controls
   // Settings persistence with versioning so new defaults take effect when bumped
-  const SETTINGS_VERSION = 2; // keep consistent with v4 page
+  const SETTINGS_VERSION = 4; // keep consistent with v4 page
   const rawStored = typeof window !== 'undefined' ? (() => {
     try { return JSON.parse(localStorage.getItem('cellCountingSettingsV8')||'null'); } catch { return null; }
   })() : null;
   const storedSettings = rawStored && rawStored.version === SETTINGS_VERSION ? rawStored : null;
   const [showBoxes, setShowBoxes] = useState<boolean>(storedSettings?.showBoxes ?? true);
-  const [showLabels, setShowLabels] = useState<boolean>(storedSettings?.showLabels ?? true);
-  const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.5);
-  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
+  const [showLabels, setShowLabels] = useState<boolean>(storedSettings?.showLabels ?? false);
+  const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.1);
+  const CLASS_TOGGLES = ['live', 'dead'] as const;
+  const CLASS_COLORS: Record<(typeof CLASS_TOGGLES)[number], string> = {
+    live: '#10b981',
+    dead: '#ef4444'
+  };
+  const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set(CLASS_TOGGLES));
   const [strokeWidth, setStrokeWidth] = useState<number>(storedSettings?.strokeWidth ?? 3);
   const [scale, setScale] = useState(1);
   // Manual annotation state
@@ -215,14 +220,7 @@ const CellCountingV8: React.FC = () => {
   };
 
   const currentBatchProcessed = currentBatchItem && currentBatchItem.result ? processDetections(currentBatchItem.result.detections, currentBatchItem.manualDetections) : [];
-  const availableClasses = useMemo(() => Array.from(new Set(currentBatchProcessed.map((d: DetectionBox) => d.class_name))), [currentBatchProcessed]);
-  useEffect(() => {
-    if (!availableClasses.length) return;
-    const hasOverlap = availableClasses.some((name: string) => selectedClasses.has(name));
-    if (!hasOverlap) {
-      setSelectedClasses(new Set(availableClasses));
-    }
-  }, [availableClasses, selectedClasses]);
+  const availableClasses = useMemo(() => [...CLASS_TOGGLES], []);
   const batchAggregated = useMemo(() => {
     let alive = 0, dead = 0;
     batchItems.forEach((it: BatchItem) => {
@@ -298,6 +296,7 @@ const CellCountingV8: React.FC = () => {
                     scale={scale}
                     onScaleChange={setScale}
                     selectedClasses={selectedClasses}
+                    classColors={CLASS_COLORS}
                     onCanvasReady={(c: HTMLCanvasElement | null)=>captureOverlay(c?.toDataURL())}
                     annotationMode={annotationMode}
                     onNewBox={handleNewManualBoxBatch}
@@ -312,7 +311,11 @@ const CellCountingV8: React.FC = () => {
             )
           ) : (
             <div className="p-8 bg-white border rounded text-sm text-gray-600">
-              Add images to begin a batch. You can upload files or capture a photo.
+              <div>Add images to begin a batch. You can upload files or capture a photo.</div>
+              <div className="mt-3 inline-flex items-center gap-2 text-xs text-gray-500">
+                <Camera className="w-4 h-4 text-teal-600" />
+                <span>Tip: capture a microscope view with your phone camera.</span>
+              </div>
             </div>
           )}
 
@@ -357,6 +360,17 @@ const CellCountingV8: React.FC = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-800">Image Tools</h2>
               <button type="button" onClick={() => setShowTools(false)} className="text-xs px-2 py-1 border rounded hover:bg-gray-50">Hide</button>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-gray-600">
+              <span className="font-medium">Class colors</span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.live }} />
+                live
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.dead }} />
+                dead
+              </span>
             </div>
             <OverlayControls
               density="compact"
