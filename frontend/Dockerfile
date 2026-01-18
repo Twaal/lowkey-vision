@@ -18,7 +18,7 @@ FROM nginx:1.27-alpine AS runner
 
 LABEL org.opencontainers.image.source="https://github.com/Twaal/low-key-vision" \
       org.opencontainers.image.description="Lowkey Vision Frontend" \
-      org.opencontainers.image.licenses=""
+      org.opencontainers.image.licenses="agpl-3.0"
 
 # Copy custom nginx config (optional override)
 COPY --from=build /app/dist /usr/share/nginx/html
