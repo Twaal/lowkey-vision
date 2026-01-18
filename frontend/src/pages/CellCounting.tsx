@@ -240,8 +240,8 @@ const CellCounting: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">Cell Counter YOLOv4</h1>
-      <p className="text-gray-600 mb-6 text-sm leading-relaxed">Upload multiple brightfield Trypan blue stained images for batch detection of Alive / Dead cells and viability estimation. This demo runs a YOLOv4 model over all selected files.</p>
+      <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">Cell Counter</h1>
+      <p className="text-gray-600 mb-6 text-sm leading-relaxed">Upload multiple brightfield Trypan blue stained images for batch detection of Alive / Dead cells and viability estimation. This demo runs our latest model over all selected files.</p>
         <div className="space-y-8">
           <div className="bg-white border rounded p-6">
             <h2 className="font-semibold mb-4 flex items-center gap-2"><FolderOpen className="w-5 h-5"/>Batch Images</h2>
@@ -305,7 +305,7 @@ const CellCounting: React.FC = () => {
                   <div><span className="font-semibold">Batch Alive:</span> {batchAggregated.alive}</div>
                   <div><span className="font-semibold">Batch Dead:</span> {batchAggregated.dead}</div>
                   <div><span className="font-semibold">Total:</span> {batchAggregated.total}</div>
-                  <div><span className="font-semibold">Viability:</span> {batchAggregated.viability!==null? batchAggregated.viability.toFixed(1)+'%':'—'}</div>
+                  <div><span className="font-semibold">Viability:</span> {batchAggregated.viability!==null? batchAggregated.viability.toFixed(1)+'%':', '}</div>
                   <div className="text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</div>
                 </div>
               </div>
@@ -315,7 +315,7 @@ const CellCounting: React.FC = () => {
             currentBatchItem.result ? (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold">Image {batchIndex+1} / {batchItems.length} — {currentBatchItem.file.name}</h2>
+                <h2 className="font-semibold">Image {batchIndex+1} / {batchItems.length} ,  {currentBatchItem.file.name}</h2>
                 <div className="flex gap-2">
                   <button onClick={()=>setBatchIndex((i: number)=>Math.max(0,i-1))} disabled={batchIndex===0} className="p-2 border rounded disabled:opacity-40"><ChevronLeft className="w-4 h-4"/></button>
                   <button onClick={()=>setBatchIndex((i: number)=>Math.min(batchItems.length-1,i+1))} disabled={batchIndex===batchItems.length-1} className="p-2 border rounded disabled:opacity-40"><ChevronRight className="w-4 h-4"/></button>

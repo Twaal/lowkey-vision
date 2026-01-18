@@ -14,7 +14,7 @@ const AboutPage = () => {
           </h1>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
             Lowkey Vision delivers fast, precise, and reproducible cell counting and viability analysis
-            for common immortal cell lines like HeLa, HEK293, CHO, and Jurkat—eliminating manual tallies
+            for common immortal cell lines like HeLa, HEK293, CHO, and Jurkat, eliminating manual tallies
             and spreadsheet fatigue.
           </p>
         </div>
@@ -32,7 +32,7 @@ const AboutPage = () => {
                 <p className="text-lg text-gray-700 leading-relaxed">
                   Starting with robust Trypan blue exclusion counting, we are expanding toward
                   morphology-aware metrics (cell size, circularity), colony detection, and label‑free
-                  viability estimation—always emphasizing reproducibility and transparency.
+                  viability estimation, always emphasizing reproducibility and transparency.
                 </p>
               </div>
               <div className="flex justify-center">
@@ -80,8 +80,7 @@ const AboutPage = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Detection & Viability Models</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Ensemble object detection and density-aware post-processing tuned on curated
-                  HeLa / HEK293 / CHO / Jurkat datasets with staining variability normalization.
+                  Detect and classify suspension cells with high accuracy.
                 </p>
               </div>
             </div>
@@ -91,9 +90,9 @@ const AboutPage = () => {
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-6">
                   <Microscope className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Cloud Microservices</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Cloud Processing</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  GPU-backed workers with queueing + autoscaling to complete the task in
+                  GPU-backed workers to complete the task in
                   seconds without local setup.
                 </p>
               </div>
@@ -145,10 +144,10 @@ const AboutPage = () => {
               </div>
 
               <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-blue-200">
-                <h3 className="text-lg font-semibold text-blue-700 mb-3">Upcoming: Morphology & Growth</h3>
+                <h3 className="text-lg font-semibold text-blue-700 mb-3">Upcoming: Dye-free viability</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Cell size & circularity distribution, confluence estimation, colony / spheroid
-                  emergence tracking, and longitudinal growth metrics.
+                  Using deep learning to estimate cell viability from brightfield images alone,
+                  eliminating the need for dyes.
                 </p>
               </div>
             </div>
@@ -167,7 +166,7 @@ const AboutPage = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/cell-counting"
+                to="/cell-counting-v8"
                 className="inline-flex items-center px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-lg"
               >
                 Try Our Demo

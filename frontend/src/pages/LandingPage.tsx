@@ -11,8 +11,8 @@ const LandingPage = () => {
         videoSrc="/media/hero-cells.mp4" // PLACE your video under public/media/
         poster="/media/hero-poster.jpg"   // Optional poster image
         heading={<><span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-200 to-emerald-300">AI-Powered</span><span className="block">Cell Counting & Analysis</span></>}
-        subheading="Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams."
-  primaryCta={{ label: 'Try Cell Counter YOLOv4', to: '/cell-counting' }}
+          subheading="Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams."
+          primaryCta={{ label: 'Start Counting', to: '/cell-counting-v8' }}
         secondaryCta={{ label: 'Learn More', to: '/about' }}
       />
 
@@ -164,10 +164,10 @@ const LandingPage = () => {
             Upload a microscopy image and get fast, reproducible cell metrics in seconds.
           </p>
           <Link
-            to="/cell-counting"
+            to="/cell-counting-v8"
             className="inline-flex items-center px-8 py-4 bg-white text-teal-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            Open Cell Counter YOLOv4
+            Start Counting
             <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </div>
