@@ -89,7 +89,7 @@ const AboutPage = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Cloud Processing</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  GPU-backed workers to complete the task in
+                  Complete the task in
                   seconds without local setup.
                 </p>
               </div>
@@ -102,7 +102,7 @@ const AboutPage = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Researcher UX</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  Fast in-browser annotation, and exportable audit trails.
+                  Fast in-browser annotation, fine-tuning, and exportable audit trails.
                 </p>
               </div>
             </div>

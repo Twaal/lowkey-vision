@@ -9,7 +9,7 @@ const LandingPage = () => {
       <HeroVideo
         videoSrc="/media/hero-cells.mp4"
         poster="/media/hero-poster.jpg"
-        heading={<><span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-200 to-emerald-300">AI-Powered</span><span className="block">Cell Counting & Analysis</span></>}
+        heading={<><span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-cyan-200 to-emerald-300">Accelerated</span><span className="block">Cell Counting & Analysis</span></>}
           subheading="Turn microscopy images into reliable quantitative data. Fast, accurate, and accessible cell counting for research labs and biotech teams."
           primaryCta={{ label: 'Start Counting', to: '/cell-counting-v8' }}
         secondaryCta={{ label: 'Learn More', to: '/about' }}
@@ -41,9 +41,9 @@ const LandingPage = () => {
               <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-blue-200 transition-colors duration-200">
                 <Brain className="h-8 w-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">AI-Powered Intelligence</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">ML-Powered Intelligence</h3>
               <p className="text-gray-600 leading-relaxed">
-                State-of-the-art machine learning models trained on extensive medical imaging datasets.
+                State-of-the-art machine learning models trained on extensive datasets. No generative AI.
               </p>
             </div>
 
