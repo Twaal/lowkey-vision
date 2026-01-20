@@ -13,23 +13,23 @@ services:
 
   cell-counter-v8:
     build:
-      context: ./cell-counter-yolov8
+      context: ./backend/cell-counter-yolov8
       dockerfile: Dockerfile
     ports:
       - "8002:8002"
     volumes:
-      - ./cell-counter-yolov8:/app
+      - ./backend/cell-counter-yolov8:/app
     environment:
       - PYTHONUNBUFFERED=1
 
   cell-counter-cuda:
     build:
-      context: ./cell-counter-cuda
+      context: ./backend/cell-counter-cuda
       dockerfile: Dockerfile
     gpus: all
     ports:
       - "8003:8003"
     volumes:
-      - ./cell-counter-cuda:/app
+      - ./backend/cell-counter-cuda:/app
     environment:
       - PYTHONUNBUFFERED=1
