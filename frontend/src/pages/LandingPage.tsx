@@ -33,7 +33,7 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">High-Resolution Analysis</h3>
               <p className="text-gray-600 leading-relaxed">
-                Process high-resolution images from whole slide scans, PET scans, and more.
+                Process high-resolution images.
               </p>
             </div>
 
