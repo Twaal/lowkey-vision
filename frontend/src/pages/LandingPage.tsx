@@ -33,7 +33,7 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">High-Resolution Analysis</h3>
               <p className="text-gray-600 leading-relaxed">
-                Process high-resolution images from whole slide scans, PET scans, and more.
+                Process high-resolution images.
               </p>
             </div>
 
@@ -108,7 +108,7 @@ const LandingPage = () => {
             <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-200">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Biotech Startups</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Access enterprise-grade analysis tools without the infrastructure investment.
+                Access analysis tools without the infrastructure investment.
                 Scale your operations as you grow.
               </p>
               <ul className="space-y-2 text-gray-600">
