@@ -26,7 +26,8 @@ const CellCountingV8: React.FC = () => {
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchIndex, setBatchIndex] = useState(0);
-  const [batchProgress, setBatchProgress] = useState<{ processed: number; total: number }>({ processed: 0, total: 0 });
+  const [batchProgress, setBatchProgress] = useState(0);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const currentBatchItem = batchItems[batchIndex];
   const SETTINGS_VERSION = 4;
@@ -67,13 +68,14 @@ const CellCountingV8: React.FC = () => {
   };
 
   const acceptableTypes = new Set(['image/jpeg','image/png','image/tiff']);
-  const prevTotal = (prev: BatchItem[], added: number) => prev.length + added;
   const handleBatchFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     const files = Array.from(fileList).filter((f: File) => acceptableTypes.has(f.type));
     const newItems: BatchItem[] = files.map((f: File) => ({ id: crypto.randomUUID(), file: f, url: URL.createObjectURL(f), status: 'pending', manualDetections: [] }));
-    setBatchItems((prev: BatchItem[]) => [...prev, ...newItems]);
-    setBatchProgress((p: { processed: number; total: number }) => ({ processed: p.processed, total: prevTotal(batchItems, newItems.length) }));
+    setBatchItems((prev: BatchItem[]) => {
+      const next = [...prev, ...newItems];
+      return next;
+    });
   };
 
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +89,6 @@ const CellCountingV8: React.FC = () => {
     if (batchRunning || !batchItems.length) return;
     setBatchRunning(true);
     let processed = 0;
-    const total = batchItems.length;
     let firstShown = false;
     for (let i = 0; i < batchItems.length; i++) {
       setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'processing' } : it));
@@ -107,18 +108,28 @@ const CellCountingV8: React.FC = () => {
         setShowEarlyAccessModal(true);
       }
       processed++;
-      setBatchProgress({ processed, total });
+      setBatchProgress(processed);
     }
     setBatchRunning(false);
   }, [batchItems, batchRunning]);
 
   const removeBatchItem = (id: string) => {
-    setBatchItems((items: BatchItem[]) => items.filter((i: BatchItem) => i.id !== id));
-    setBatchProgress((p: { processed: number; total: number }) => ({ processed: Math.min(p.processed, Math.max(0, batchItems.length - 1)), total: Math.max(0, batchItems.length - 1) }));
-    setBatchIndex((i: number) => Math.min(i, Math.max(0, batchItems.length - 2)));
+    setBatchItems((items: BatchItem[]) => {
+      const next = items.filter((i: BatchItem) => i.id !== id);
+      setBatchProgress((p: number) => Math.min(p, next.length));
+      setBatchIndex((i: number) => Math.min(i, Math.max(0, next.length - 1)));
+      return next;
+    });
   };
 
-  const clearBatch = () => { setBatchItems([]); setBatchIndex(0); setBatchProgress({ processed: 0, total: 0 }); setBatchRunning(false); };
+  const clearBatch = () => {
+    setBatchItems([]);
+    setBatchIndex(0);
+    setBatchProgress(0);
+    setBatchRunning(false);
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+  };
 
   const captureOverlay = (dataUrl?: string) => {
     if (!dataUrl || !currentBatchItem) return;
@@ -255,9 +266,26 @@ const CellCountingV8: React.FC = () => {
       )}
       <div className="mb-4 sticky top-12 z-40 flex flex-wrap items-center gap-3 bg-white border rounded px-3 py-2">
         <div className="flex items-center gap-2">
-          <FolderOpen className="w-4 h-4 text-gray-600" />
-          <label className="text-xs font-medium text-gray-600">Upload</label>
-          <input type="file" multiple accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleBatchFiles(e.target.files)} className="text-xs" />
+          <button
+            type="button"
+            onClick={() => uploadInputRef.current?.click()}
+            disabled={batchRunning}
+            className="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-xs bg-white hover:bg-gray-50 disabled:opacity-50"
+          >
+            <FolderOpen className="w-4 h-4" />
+            Upload
+          </button>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              handleBatchFiles(e.target.files);
+              e.target.value = '';
+            }}
+            className="hidden"
+          />
         </div>
         <input
           ref={cameraInputRef}
@@ -287,7 +315,7 @@ const CellCountingV8: React.FC = () => {
           {showTools ? 'Hide Tools' : 'Show Tools'}
         </button>
         {batchItems.length>0 && (
-          <div className="text-[11px] text-gray-600">Progress: {batchProgress.processed}/{batchItems.length}</div>
+          <div className="text-[11px] text-gray-600">Progress: {batchProgress}/{batchItems.length}</div>
         )}
       </div>
 
@@ -323,8 +351,7 @@ const CellCountingV8: React.FC = () => {
               </div>
             ) : (
               <div className="p-6 bg-white border rounded text-sm text-gray-600">
-                <div className="animate-pulse mb-2 font-medium">Processing image {batchIndex+1} of {batchItems.length}…</div>
-                <div>This view will update automatically once the first image finishes. The rest will continue processing in the background.</div>
+                <div className="animate-pulse mb-2 font-medium">Start batch of {batchItems.length} images</div>
               </div>
             )
           ) : (
