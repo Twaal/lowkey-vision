@@ -415,7 +415,6 @@ const CellCountingV8: React.FC = () => {
                 className="mb-0"
                 showAdvanced={showAdvanced}
                 setShowAdvanced={setShowAdvanced}
-                showBoxes={showBoxes} setShowBoxes={setShowBoxes}
                 showLabels={showLabels} setShowLabels={setShowLabels}
                 strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
                 scale={scale} setScale={setScale}

@@ -1,9 +1,9 @@
 import React from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface OverlayControlsProps {
   showAdvanced: boolean;
   setShowAdvanced: (v: boolean) => void;
-  showBoxes: boolean; setShowBoxes: (v: boolean) => void;
   showLabels: boolean; setShowLabels: (v: boolean) => void;
   strokeWidth: number; setStrokeWidth: (v: number) => void;
   scale: number; setScale: (v: number) => void;
@@ -26,7 +26,6 @@ interface OverlayControlsProps {
 const OverlayControls: React.FC<OverlayControlsProps> = ({
   showAdvanced,
   setShowAdvanced,
-  showBoxes, setShowBoxes,
   showLabels, setShowLabels,
   strokeWidth, setStrokeWidth,
   scale, setScale,
@@ -49,34 +48,12 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
   const isCompact = density === 'compact';
   const textClass = isCompact ? 'text-xs' : 'text-sm';
   const buttonPadding = isCompact ? 'px-2.5 py-1' : 'px-3 py-1';
+  const sectionIconClass = isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4';
+  const [showLabelTools, setShowLabelTools] = React.useState(true);
 
   return (
     <div className={`${isCompact ? 'space-y-2' : 'space-y-3'} bg-white border rounded ${isCompact ? 'p-3' : 'p-4'} ${isCompact ? '' : 'mb-4'} ${className ?? ''}`}>
       <div className={`flex flex-wrap ${isCompact ? 'gap-3' : 'gap-4'} items-center`}>
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className={`${textClass} ${buttonPadding} border rounded ${showAdvanced ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700' : 'bg-white hover:bg-gray-50'}`}
-        >
-          Advanced
-        </button>
-        <label className={`flex items-center space-x-2 ${textClass}`}>
-          <input type="checkbox" checked={showBoxes} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShowBoxes(e.target.checked)} />
-          <span>Show Boxes</span>
-        </label>
-        <label className={`flex items-center space-x-2 ${textClass}`}>
-          <input type="checkbox" checked={showLabels} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShowLabels(e.target.checked)} />
-          <span>Show Labels</span>
-        </label>
-        <label className={`flex items-center space-x-2 ${textClass}`}>
-          <span>Bounding Box {strokeWidth}px</span>
-          <input type="range" min={1} max={10} step={1} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(parseInt(e.target.value))} />
-          <input type="number" min={1} max={10} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(clamp(parseInt(e.target.value)||1,1,10))} className="w-14 border rounded px-1 py-0.5 text-xs" />
-          <div className="flex flex-col">
-            <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth+1,1,10))} className="text-xs border rounded-t px-1">+</button>
-            <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth-1,1,10))} className="text-xs border rounded-b px-1">-</button>
-          </div>
-        </label>
         <label className={`flex items-center space-x-2 ${textClass}`}>
           <span>Zoom {(scale*100).toFixed(0)}%</span>
           <input type="range" min={0.25} max={4} step={0.05} value={scale} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setScale(parseFloat(e.target.value))} />
@@ -86,48 +63,103 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
             <button type="button" onClick={()=>setScale(clamp(parseFloat((scale-0.05).toFixed(2)),0.25,4))} className="text-xs border rounded-b px-1">-</button>
           </div>
         </label>
-        {showAnnotationControls && setAnnotationMode && setNewBoxClass && (
-          <>
-            <label className={`flex items-center space-x-2 ${textClass}`}>
-              <input type="checkbox" checked={!!annotationMode} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setAnnotationMode(e.target.checked)} />
-              <span>Annotate</span>
-            </label>
-            {annotationMode && (
-              <label className={`flex items-center space-x-2 ${textClass}`}>
-                <span>Class</span>
-                <select value={newBoxClass} onChange={(e: React.ChangeEvent<HTMLSelectElement>)=>setNewBoxClass(e.target.value)} className={`border rounded px-2 py-1 ${textClass}`}>
-                  <option value="live">live</option>
-                  <option value="dead">dead</option>
-                </select>
-              </label>
-            )}
-          </>
-        )}
-        {showAnnotationControls && annotationMode && onClearManualAnnotations && (
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('Remove all manual annotations?')) {
-                onClearManualAnnotations();
-              }
-            }}
-            className={`${textClass} ${buttonPadding} border rounded text-red-600 border-red-300 hover:bg-red-50`}
-            title="Remove all manually added boxes"
-          >
-            Clear Manual Annotations
-          </button>
-        )}
         {extraLeftButtons}
         <div className="ml-auto flex gap-2">{extraRightButtons}</div>
       </div>
-      <div className="flex flex-wrap gap-2 text-xs">
-        {Array.from(new Set(availableClasses)).map(name => {
-          const active = selectedClasses.has(name);
-          return <button key={name} onClick={()=>toggleClass(name)} className={`px-3 py-1 rounded border transition ${active? 'bg-teal-600 text-white border-teal-600':'bg-white text-gray-700 border-gray-300 hover:border-teal-500'}`}>{name}</button>;
-        })}
+      <div className={`${isCompact ? 'mt-2 pt-2' : 'mt-3 pt-3'} border-t`}>
+        <div className={`flex flex-wrap items-center gap-2 ${textClass}`}>
+          <button
+            type="button"
+            onClick={() => setShowLabelTools((v: boolean) => !v)}
+            className="inline-flex items-center gap-2"
+            aria-expanded={showLabelTools}
+          >
+            {showLabelTools ? <ChevronDown className={sectionIconClass} /> : <ChevronRight className={sectionIconClass} />}
+            <span>Labels</span>
+          </button>
+        </div>
+      </div>
+      {showLabelTools && (
+        <div className={`${isCompact ? 'mt-2' : 'mt-3'} space-y-2`}>
+          <div className={`flex flex-wrap ${isCompact ? 'gap-3' : 'gap-4'} items-center`}>
+            <label className={`flex items-center space-x-2 ${textClass}`}>
+              <span>Bounding Box {strokeWidth}px</span>
+              <input type="range" min={1} max={10} step={1} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(parseInt(e.target.value))} />
+              <input type="number" min={1} max={10} value={strokeWidth} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setStrokeWidth(clamp(parseInt(e.target.value)||1,1,10))} className="w-14 border rounded px-1 py-0.5 text-xs" />
+              <div className="flex flex-col">
+                <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth+1,1,10))} className="text-xs border rounded-t px-1">+</button>
+                <button type="button" onClick={()=>setStrokeWidth(clamp(strokeWidth-1,1,10))} className="text-xs border rounded-b px-1">-</button>
+              </div>
+            </label>
+          </div>
+          <p className={`${isCompact ? 'text-[10px]' : 'text-xs'} text-gray-500`}>Use the live/dead buttons to hide that class’s bounding boxes.</p>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <label className={`flex items-center space-x-2 ${textClass}`}>
+              <input type="checkbox" checked={showLabels} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setShowLabels(e.target.checked)} />
+              <span>Show Labels</span>
+            </label>
+            {Array.from(new Set(availableClasses)).map(name => {
+              const active = selectedClasses.has(name);
+              return <button key={name} onClick={()=>toggleClass(name)} className={`px-3 py-1 rounded border transition ${active? 'bg-teal-600 text-white border-teal-600':'bg-white text-gray-700 border-gray-300 hover:border-teal-500'}`}>{name}</button>;
+            })}
+          </div>
+        </div>
+      )}
+      {showAnnotationControls && setAnnotationMode && setNewBoxClass && (
+        <div className={`${isCompact ? 'mt-2 pt-2' : 'mt-3 pt-3'} border-t`}> 
+          <div className={`flex flex-wrap items-start gap-3 ${textClass}`}>
+            <div className="flex flex-col items-start gap-2">
+              <button
+                type="button"
+                onClick={() => setAnnotationMode(!annotationMode)}
+                className="inline-flex items-center gap-2"
+                aria-expanded={!!annotationMode}
+              >
+                {annotationMode ? <ChevronDown className={sectionIconClass} /> : <ChevronRight className={sectionIconClass} />}
+                <span>Annotate</span>
+              </button>
+              {annotationMode && (
+                <label className="flex flex-col items-start gap-1">
+                  <span className="text-xs text-gray-500">Class</span>
+                  <select value={newBoxClass} onChange={(e: React.ChangeEvent<HTMLSelectElement>)=>setNewBoxClass(e.target.value)} className={`border rounded px-2 py-1 ${textClass}`}>
+                    <option value="live">live</option>
+                    <option value="dead">dead</option>
+                  </select>
+                </label>
+              )}
+            </div>
+            {annotationMode && onClearManualAnnotations && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Remove all manual annotations?')) {
+                    onClearManualAnnotations();
+                  }
+                }}
+                className={`${textClass} ${buttonPadding} border rounded text-red-600 border-red-300 hover:bg-red-50`}
+                title="Remove all manually added boxes"
+              >
+                Clear Manual Annotations
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      <div className={`${isCompact ? 'mt-2 pt-2' : 'mt-3 pt-3'} border-t`}>
+        <div className={`flex flex-wrap items-center gap-2 ${textClass}`}>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="inline-flex items-center gap-2"
+            aria-expanded={showAdvanced}
+          >
+            {showAdvanced ? <ChevronDown className={sectionIconClass} /> : <ChevronRight className={sectionIconClass} />}
+            <span>Advanced</span>
+          </button>
+        </div>
       </div>
       {showAdvanced && (
-        <div className={`mt-4 border-t pt-4 ${isCompact ? 'space-y-3 text-xs' : 'space-y-4 text-sm'}`}>
+        <div className={`mt-4 pt-4 ${isCompact ? 'space-y-3 text-xs' : 'space-y-4 text-sm'}`}>
           <div className={`flex flex-wrap ${isCompact ? 'gap-4' : 'gap-6'} items-center`}>
             <label className={`flex items-center space-x-2 ${isCompact ? 'text-xs' : ''}`}>
               <span className="whitespace-nowrap">Score ≥ {(minScore*100).toFixed(0)}%</span>
