@@ -319,7 +319,7 @@ const CellCountingV8: React.FC = () => {
         )}
       </div>
 
-      <div className={`grid grid-cols-1 ${showTools ? 'lg:grid-cols-[minmax(0,1fr)_320px]' : ''} gap-4`}>
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
         <div className="space-y-4">
           {currentBatchItem ? (
             currentBatchItem.result ? (
@@ -389,97 +389,118 @@ const CellCountingV8: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-              <div className="p-3 bg-gray-50 flex flex-wrap gap-6 text-[11px] border-t">
-                <div><span className="font-semibold">Batch live:</span> {batchAggregated.alive}</div>
-                <div><span className="font-semibold">Batch dead:</span> {batchAggregated.dead}</div>
-                <div><span className="font-semibold">Total:</span> {batchAggregated.total}</div>
-                <div><span className="font-semibold">Viability:</span> {batchAggregated.viability!==null? batchAggregated.viability.toFixed(1)+'%':', '}</div>
-                <div className="text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</div>
-              </div>
             </div>
           )}
         </div>
 
-        {showTools && (
-          <aside className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-800">Image Tools</h2>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] text-gray-600">
-              <span className="font-medium">Class colors</span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.live }} />
-                live
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.dead }} />
-                dead
-              </span>
-            </div>
-            <OverlayControls
-              density="compact"
-              className="mb-0"
-              showAdvanced={showAdvanced}
-              setShowAdvanced={setShowAdvanced}
-              showBoxes={showBoxes} setShowBoxes={setShowBoxes}
-              showLabels={showLabels} setShowLabels={setShowLabels}
-              strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
-              scale={scale} setScale={setScale}
-              annotationMode={annotationMode} setAnnotationMode={setAnnotationMode}
-              newBoxClass={newBoxClass} setNewBoxClass={setNewBoxClass}
-              minScore={minScore} setMinScore={setMinScore}
-              minArea={minArea} setMinArea={setMinArea}
-              iouThreshold={iouThreshold} setIouThreshold={setIouThreshold}
-              availableClasses={availableClasses}
-              selectedClasses={selectedClasses}
-              toggleClass={toggleClass}
-              extraRightButtons={<button onClick={downloadCsv} className="inline-flex items-center gap-1 px-2.5 py-1 border rounded text-[11px] bg-white hover:bg-teal-50"><Download className="w-4 h-4"/>CSV</button>}
-              onClearManualAnnotations={() => {
-                if (!currentBatchItem) return;
-                setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
-              }}
-            />
+        <aside className="flex flex-col gap-3">
+          {showTools && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-800">Image Tools</h2>
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-gray-600">
+                <span className="font-medium">Class colors</span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.live }} />
+                  live
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.dead }} />
+                  dead
+                </span>
+              </div>
+              <OverlayControls
+                density="compact"
+                className="mb-0"
+                showAdvanced={showAdvanced}
+                setShowAdvanced={setShowAdvanced}
+                showBoxes={showBoxes} setShowBoxes={setShowBoxes}
+                showLabels={showLabels} setShowLabels={setShowLabels}
+                strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
+                scale={scale} setScale={setScale}
+                annotationMode={annotationMode} setAnnotationMode={setAnnotationMode}
+                newBoxClass={newBoxClass} setNewBoxClass={setNewBoxClass}
+                minScore={minScore} setMinScore={setMinScore}
+                minArea={minArea} setMinArea={setMinArea}
+                iouThreshold={iouThreshold} setIouThreshold={setIouThreshold}
+                availableClasses={availableClasses}
+                selectedClasses={selectedClasses}
+                toggleClass={toggleClass}
+                extraRightButtons={<button onClick={downloadCsv} className="inline-flex items-center gap-1 px-2.5 py-1 border rounded text-[11px] bg-white hover:bg-teal-50"><Download className="w-4 h-4"/>CSV</button>}
+                onClearManualAnnotations={() => {
+                  if (!currentBatchItem) return;
+                  setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
+                }}
+              />
 
-            {currentBatchItem && currentBatchItem.result ? (
-              <>
-                <div className="bg-white border rounded p-3 text-xs">
-                  <h3 className="font-medium mb-2">Counts</h3>
-                  {(() => {
-                    const filtered = currentBatchProcessed.filter((d: DetectionBox)=>d.score>=minScore && selectedClasses.has(d.class_name));
-                    const { counts, viability } = computeCounts(filtered);
-                    return <>
-                      <ul className="space-y-1">
-                        {Object.entries(counts).map(([k,v]) => (
-                          <li key={k} className="flex justify-between"><span>{k}</span><span className="font-semibold">{v}</span></li>
+              {currentBatchItem && currentBatchItem.result ? (
+                <>
+                  {currentBatchItem.manualDetections.length>0 && (
+                    <div className="bg-white border rounded p-3 text-[11px]">
+                      <h4 className="font-medium mb-2">Manual Annotations</h4>
+                      <ul className="space-y-1 max-h-40 overflow-auto">
+                        {currentBatchItem.manualDetections.map((d: DetectionBox) => (
+                          <li key={d.id} className="flex items-center justify-between gap-2">
+                            <span className="truncate">{d.class_name} [{d.bbox.map((n: number)=>n.toFixed(0)).join(',')}]</span>
+                            <button onClick={()=>d.id && removeBatchManual(d.id!)} className="text-red-600 hover:underline">Remove</button>
+                          </li>
                         ))}
                       </ul>
-                      {viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {viability.toFixed(1)}%</p>}
-                      {currentBatchItem.manualDetections.length>0 && <p className="mt-2 text-[11px] text-gray-500">{currentBatchItem.manualDetections.length} manual annotation{currentBatchItem.manualDetections.length>1?'s':''} added.</p>}
-                    </>;
-                  })()}
+                      <p className="mt-2 text-[10px] text-gray-500">Manual boxes shown dashed.</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="bg-white border rounded p-3 text-xs text-gray-500">
+                  Run the batch to see annotations.
                 </div>
-                {currentBatchItem.manualDetections.length>0 && (
-                  <div className="bg-white border rounded p-3 text-[11px]">
-                    <h4 className="font-medium mb-2">Manual Annotations</h4>
-                    <ul className="space-y-1 max-h-40 overflow-auto">
-                      {currentBatchItem.manualDetections.map((d: DetectionBox) => (
-                        <li key={d.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{d.class_name} [{d.bbox.map((n: number)=>n.toFixed(0)).join(',')}]</span>
-                          <button onClick={()=>d.id && removeBatchManual(d.id!)} className="text-red-600 hover:underline">Remove</button>
-                        </li>
+              )}
+            </div>
+          )}
+
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
+            {currentBatchItem && currentBatchItem.result ? (
+              <div className="bg-white border rounded p-3 text-xs">
+                <h3 className="font-medium mb-2">Image totals</h3>
+                {(() => {
+                  const filtered = currentBatchProcessed.filter((d: DetectionBox)=>d.score>=minScore && selectedClasses.has(d.class_name));
+                  const { counts, viability } = computeCounts(filtered);
+                  return <>
+                    <ul className="space-y-1">
+                      {Object.entries(counts).map(([k,v]) => (
+                        <li key={k} className="flex justify-between"><span>{k}</span><span className="font-semibold">{v}</span></li>
                       ))}
                     </ul>
-                    <p className="mt-2 text-[10px] text-gray-500">Manual boxes shown dashed.</p>
-                  </div>
-                )}
-              </>
+                    {viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {viability.toFixed(1)}%</p>}
+                    {currentBatchItem.manualDetections.length>0 && <p className="mt-2 text-[11px] text-gray-500">{currentBatchItem.manualDetections.length} manual annotation{currentBatchItem.manualDetections.length>1?'s':''} added.</p>}
+                  </>;
+                })()}
+              </div>
             ) : (
               <div className="bg-white border rounded p-3 text-xs text-gray-500">
-                Run the batch to see counts and annotations.
+                Run the batch to see image totals.
               </div>
             )}
-          </aside>
-        )}
+
+            <div className="bg-white border rounded p-3 text-xs">
+              <h3 className="font-medium mb-2">Batch totals</h3>
+              {batchItems.length>0 ? (
+                <>
+                  <ul className="space-y-1">
+                    <li className="flex justify-between"><span>Batch live</span><span className="font-semibold">{batchAggregated.alive}</span></li>
+                    <li className="flex justify-between"><span>Batch dead</span><span className="font-semibold">{batchAggregated.dead}</span></li>
+                    <li className="flex justify-between"><span>Total</span><span className="font-semibold">{batchAggregated.total}</span></li>
+                  </ul>
+                  {batchAggregated.viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {batchAggregated.viability.toFixed(1)}%</p>}
+                  <p className="mt-2 text-[11px] text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</p>
+                </>
+              ) : (
+                <p className="text-gray-500">Add images to see batch totals.</p>
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
