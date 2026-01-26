@@ -45,6 +45,18 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
   density = 'regular'
 }: OverlayControlsProps) => {
   const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+  const IOU_MIN = 0.01;
+  const IOU_MAX = 0.99;
+  const iouInverse = iouThreshold > 0 ? 1 / iouThreshold : 1 / IOU_MAX;
+  const clampIouInverse = (v: number) => {
+    const clamped = clamp(v, 1 / IOU_MAX, 1 / IOU_MIN);
+    return clamped;
+  };
+  const setFromIouInverse = (v: number) => {
+    const inv = clampIouInverse(v);
+    const nextIou = clamp(1 / inv, IOU_MIN, IOU_MAX);
+    setIouThreshold(parseFloat(nextIou.toFixed(3)));
+  };
   const isCompact = density === 'compact';
   const textClass = isCompact ? 'text-xs' : 'text-sm';
   const buttonPadding = isCompact ? 'px-2.5 py-1' : 'px-3 py-1';
@@ -176,12 +188,27 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
               <span className="text-xs text-gray-500">px²</span>
             </label>
             <label className={`flex items-center space-x-2 ${isCompact ? 'text-xs' : ''}`}>
-              <span>IOU ≤ {iouThreshold.toFixed(2)}</span>
-              <input type="range" min={0.001} max={0.9} step={0.01} value={iouThreshold} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setIouThreshold(parseFloat(e.target.value))} />
-              <input type="number" min={0} max={0.9} step={0.01} value={iouThreshold.toFixed(2)} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setIouThreshold(clamp(parseFloat(e.target.value)||0,0,0.9))} className="w-20 border rounded px-1 py-0.5 text-xs" />
+              <span>1/IOU ≤ {iouInverse.toFixed(2)}</span>
+              <input
+                type="range"
+                min={(1 / IOU_MAX).toFixed(2)}
+                max={(1 / IOU_MIN).toFixed(2)}
+                step={0.1}
+                value={iouInverse}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setFromIouInverse(parseFloat(e.target.value))}
+              />
+              <input
+                type="number"
+                min={(1 / IOU_MAX).toFixed(2)}
+                max={(1 / IOU_MIN).toFixed(2)}
+                step={0.1}
+                value={iouInverse.toFixed(2)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>)=>setFromIouInverse(parseFloat(e.target.value)||1/IOU_MAX)}
+                className="w-20 border rounded px-1 py-0.5 text-xs"
+              />
               <div className="flex flex-col">
-                <button type="button" onClick={()=>setIouThreshold(clamp(parseFloat((iouThreshold+0.01).toFixed(2)),0,0.9))} className="text-[10px] border rounded-t px-1">+</button>
-                <button type="button" onClick={()=>setIouThreshold(clamp(parseFloat((iouThreshold-0.01).toFixed(2)),0,0.9))} className="text-[10px] border rounded-b px-1">-</button>
+                <button type="button" onClick={()=>setFromIouInverse(parseFloat((iouInverse+0.1).toFixed(2)))} className="text-[10px] border rounded-t px-1">+</button>
+                <button type="button" onClick={()=>setFromIouInverse(parseFloat((iouInverse-0.1).toFixed(2)))} className="text-[10px] border rounded-b px-1">-</button>
               </div>
             </label>
           </div>

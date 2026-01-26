@@ -30,7 +30,7 @@ const CellCountingV8: React.FC = () => {
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const currentBatchItem = batchItems[batchIndex];
-  const SETTINGS_VERSION = 4;
+  const SETTINGS_VERSION = 5;
   const rawStored = typeof window !== 'undefined' ? (() => {
     try { return JSON.parse(localStorage.getItem('cellCountingSettingsV8')||'null'); } catch { return null; }
   })() : null;
@@ -50,7 +50,7 @@ const CellCountingV8: React.FC = () => {
   const [newBoxClass, setNewBoxClass] = useState('live');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10);
-  const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01);
+  const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.9);
   const [showTools, setShowTools] = useState(false);
   const [showEarlyAccessModal, setShowEarlyAccessModal] = useState(false);
   const [showRemoveCurrentModal, setShowRemoveCurrentModal] = useState(false);
@@ -261,7 +261,7 @@ const CellCountingV8: React.FC = () => {
       return area >= minArea && d.score >= minScore;
     });
     let kept: DetectionBox[] = [];
-    if (iouThreshold > 0 && iouThreshold < 0.99) {
+    if (iouThreshold > 0 && iouThreshold <= 0.99) {
       const sorted = [...modelOnly].sort((a,b)=>b.score - a.score);
       sorted.forEach(cand => {
         const overlaps = kept.some(k => k.class_name === cand.class_name && iou(k, cand) > iouThreshold);
