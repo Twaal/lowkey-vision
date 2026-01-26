@@ -51,7 +51,7 @@ const CellCountingV8: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10);
   const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01);
-  const [showTools, setShowTools] = useState(true);
+  const [showTools, setShowTools] = useState(false);
   const [showEarlyAccessModal, setShowEarlyAccessModal] = useState(false);
 
   useEffect(() => {
