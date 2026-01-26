@@ -374,7 +374,7 @@ const CellCountingV8: React.FC = () => {
                       <th className="text-left px-2 py-1">#</th>
                       <th className="text-left px-2 py-1">File</th>
                       <th className="text-left px-2 py-1">Status</th>
-                      <th className="px-2 py-1"></th>
+                      <th className="px-2 py-1 text-center w-10">Remove</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -383,7 +383,7 @@ const CellCountingV8: React.FC = () => {
                         <td className="px-2 py-1">{i+1}</td>
                         <td className="px-2 py-1 truncate max-w-[240px]">{it.file.name}</td>
                         <td className="px-2 py-1">{it.status === 'error' ? 'early access' : it.status}</td>
-                        <td className="px-2 py-1"><button onClick={(e: React.MouseEvent<HTMLButtonElement>)=>{e.stopPropagation(); removeBatchItem(it.id);}} className="text-red-600">×</button></td>
+                        <td className="px-2 py-1 text-center w-10"><button onClick={(e: React.MouseEvent<HTMLButtonElement>)=>{e.stopPropagation(); removeBatchItem(it.id);}} className="text-red-600">×</button></td>
                       </tr>
                     ))}
                   </tbody>
