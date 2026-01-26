@@ -53,6 +53,11 @@ const CellCountingV8: React.FC = () => {
   const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01);
   const [showTools, setShowTools] = useState(false);
   const [showEarlyAccessModal, setShowEarlyAccessModal] = useState(false);
+  const [showRemoveCurrentModal, setShowRemoveCurrentModal] = useState(false);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+  const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set());
+  const [showRemoveSelectedModal, setShowRemoveSelectedModal] = useState(false);
+  const [showClearBatchModal, setShowClearBatchModal] = useState(false);
 
   useEffect(() => {
     const toStore = { version: SETTINGS_VERSION, showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold };
@@ -122,6 +127,56 @@ const CellCountingV8: React.FC = () => {
     });
   };
 
+  const removeBatchItems = (ids: Set<string>) => {
+    if (!ids.size) return;
+    setBatchItems((items: BatchItem[]) => {
+      const next = items.filter((i: BatchItem) => !ids.has(i.id));
+      setBatchProgress((p: number) => Math.min(p, next.length));
+      setBatchIndex((i: number) => Math.min(i, Math.max(0, next.length - 1)));
+      return next;
+    });
+    setSelectedBatchIds(new Set());
+  };
+
+  const requestRemoveCurrent = () => {
+    if (!currentBatchItem) return;
+    setPendingRemoveId(currentBatchItem.id);
+    setShowRemoveCurrentModal(true);
+  };
+
+  const confirmRemoveCurrent = () => {
+    if (pendingRemoveId) removeBatchItem(pendingRemoveId);
+    setPendingRemoveId(null);
+    setShowRemoveCurrentModal(false);
+  };
+
+  const cancelRemoveCurrent = () => {
+    setPendingRemoveId(null);
+    setShowRemoveCurrentModal(false);
+  };
+
+  const requestRemoveSelected = () => {
+    if (!selectedBatchIds.size) return;
+    setShowRemoveSelectedModal(true);
+  };
+
+  const confirmRemoveSelected = () => {
+    removeBatchItems(selectedBatchIds);
+    setShowRemoveSelectedModal(false);
+  };
+
+  const cancelRemoveSelected = () => {
+    setShowRemoveSelectedModal(false);
+  };
+
+  const toggleBatchSelection = (id: string) => {
+    setSelectedBatchIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   const clearBatch = () => {
     setBatchItems([]);
     setBatchIndex(0);
@@ -129,6 +184,20 @@ const CellCountingV8: React.FC = () => {
     setBatchRunning(false);
     if (uploadInputRef.current) uploadInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
+  };
+
+  const requestClearBatch = () => {
+    if (!batchItems.length) return;
+    setShowClearBatchModal(true);
+  };
+
+  const confirmClearBatch = () => {
+    clearBatch();
+    setShowClearBatchModal(false);
+  };
+
+  const cancelClearBatch = () => {
+    setShowClearBatchModal(false);
   };
 
   const captureOverlay = (dataUrl?: string) => {
@@ -264,6 +333,84 @@ const CellCountingV8: React.FC = () => {
           </div>
         </div>
       )}
+      {showRemoveCurrentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Remove image?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              This will remove the current image from the batch. This can’t be undone.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={cancelRemoveCurrent}
+                className="px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemoveCurrent}
+                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showRemoveSelectedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Remove selected images?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              This will remove {selectedBatchIds.size} selected image{selectedBatchIds.size === 1 ? '' : 's'} from the batch. This can’t be undone.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={cancelRemoveSelected}
+                className="px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemoveSelected}
+                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showClearBatchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Clear batch?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              This will remove all images from the batch. This can’t be undone.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={cancelClearBatch}
+                className="px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmClearBatch}
+                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Clear batch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-4 sticky top-12 z-40 flex flex-wrap items-center gap-3 bg-white border rounded px-3 py-2">
         <div className="flex items-center gap-2">
           <button
@@ -306,7 +453,7 @@ const CellCountingV8: React.FC = () => {
           <Camera className="w-4 h-4"/> Take Photo
         </button>
         <button onClick={runBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-teal-600 text-white rounded disabled:bg-gray-400"><Play className="w-4 h-4"/>{batchRunning?'Running...':'Start Batch'}</button>
-        <button onClick={clearBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50 disabled:opacity-50"><Trash2 className="w-4 h-4"/>Clear Batch</button>
+        <button onClick={requestClearBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50 disabled:opacity-50"><Trash2 className="w-4 h-4"/>Clear Batch</button>
         <button
           type="button"
           onClick={() => setShowTools((v: boolean) => !v)}
@@ -325,8 +472,20 @@ const CellCountingV8: React.FC = () => {
             currentBatchItem.result ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between bg-white border rounded px-3 py-2">
-                  <div className="text-sm font-medium truncate">Image {batchIndex+1} / {batchItems.length}: {currentBatchItem.file.name}</div>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={requestRemoveCurrent}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] border rounded text-red-600 hover:bg-red-50"
+                      title="Remove current image from batch"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Remove
+                    </button>
+                    <div className="text-sm font-medium truncate">{currentBatchItem.file.name}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-600">{batchIndex+1} / {batchItems.length}</span>
                     <button onClick={()=>setBatchIndex((i: number)=>Math.max(0,i-1))} disabled={batchIndex===0} className="p-2 border rounded disabled:opacity-40"><ChevronLeft className="w-4 h-4"/></button>
                     <button onClick={()=>setBatchIndex((i: number)=>Math.min(batchItems.length-1,i+1))} disabled={batchIndex===batchItems.length-1} className="p-2 border rounded disabled:opacity-40"><ChevronRight className="w-4 h-4"/></button>
                   </div>
@@ -366,7 +525,17 @@ const CellCountingV8: React.FC = () => {
 
           {batchItems.length>0 && (
             <div className="border rounded bg-white">
-              <div className="px-3 py-2 border-b text-xs font-semibold text-gray-700">Batch Queue</div>
+              <div className="px-3 py-2 border-b flex items-center justify-between text-xs font-semibold text-gray-700">
+                <span>Batch Queue</span>
+                <button
+                  type="button"
+                  onClick={requestRemoveSelected}
+                  disabled={!selectedBatchIds.size}
+                  className="inline-flex items-center gap-1 px-2 py-1 border rounded text-[11px] text-red-600 bg-white hover:bg-red-50 disabled:opacity-50"
+                >
+                  Remove selected
+                </button>
+              </div>
               <div className="max-h-56 overflow-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50 text-gray-600">
@@ -374,16 +543,28 @@ const CellCountingV8: React.FC = () => {
                       <th className="text-left px-2 py-1">#</th>
                       <th className="text-left px-2 py-1">File</th>
                       <th className="text-left px-2 py-1">Status</th>
-                      <th className="px-2 py-1 text-center w-10">Remove</th>
+                      <th className="text-left px-2 py-1">Select</th>
                     </tr>
                   </thead>
                   <tbody>
                     {batchItems.map((it: BatchItem,i: number) => (
                       <tr key={it.id} className="border-t hover:bg-teal-50 cursor-pointer" onClick={()=>setBatchIndex(i)}>
                         <td className="px-2 py-1">{i+1}</td>
-                        <td className="px-2 py-1 truncate max-w-[240px]">{it.file.name}</td>
+                        <td className="px-2 py-1 truncate max-w-[220px]">{it.file.name}</td>
                         <td className="px-2 py-1">{it.status === 'error' ? 'early access' : it.status}</td>
-                        <td className="px-2 py-1 text-center w-10"><button onClick={(e: React.MouseEvent<HTMLButtonElement>)=>{e.stopPropagation(); removeBatchItem(it.id);}} className="text-red-600">×</button></td>
+                        <td className="px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedBatchIds.has(it.id)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              e.stopPropagation();
+                              toggleBatchSelection(it.id);
+                            }}
+                            onClick={(e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation()}
+                            className="h-3.5 w-3.5 accent-teal-600"
+                            aria-label={`Select ${it.file.name}`}
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
