@@ -404,7 +404,6 @@ const CellCountingV8: React.FC = () => {
           <aside className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-800">Image Tools</h2>
-              <button type="button" onClick={() => setShowTools(false)} className="text-xs px-2 py-1 border rounded hover:bg-gray-50">Hide</button>
             </div>
             <div className="flex items-center gap-3 text-[11px] text-gray-600">
               <span className="font-medium">Class colors</span>
