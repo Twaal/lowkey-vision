@@ -427,7 +427,6 @@ const CellCountingV8: React.FC = () => {
                 availableClasses={availableClasses}
                 selectedClasses={selectedClasses}
                 toggleClass={toggleClass}
-                extraRightButtons={<button onClick={downloadCsv} className="inline-flex items-center gap-1 px-2.5 py-1 border rounded text-[11px] bg-white hover:bg-teal-50"><Download className="w-4 h-4"/>CSV</button>}
                 onClearManualAnnotations={() => {
                   if (!currentBatchItem) return;
                   setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
@@ -484,7 +483,17 @@ const CellCountingV8: React.FC = () => {
             )}
 
             <div className="bg-white border rounded p-3 text-xs">
-              <h3 className="font-medium mb-2">Batch totals</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium">Batch totals</h3>
+                <button
+                  onClick={downloadCsv}
+                  disabled={!batchItems.length}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 border rounded text-[11px] bg-white hover:bg-teal-50 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  CSV
+                </button>
+              </div>
               {batchItems.length>0 ? (
                 <>
                   <ul className="space-y-1">
