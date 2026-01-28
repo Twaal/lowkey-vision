@@ -35,7 +35,6 @@ const CellCountingV8: React.FC = () => {
     try { return JSON.parse(localStorage.getItem('cellCountingSettingsV8')||'null'); } catch { return null; }
   })() : null;
   const storedSettings = rawStored && rawStored.version === SETTINGS_VERSION ? rawStored : null;
-  const [showBoxes, setShowBoxes] = useState<boolean>(storedSettings?.showBoxes ?? true);
   const [showLabels, setShowLabels] = useState<boolean>(storedSettings?.showLabels ?? false);
   const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.1);
   const CLASS_TOGGLES = ['live', 'dead'] as const;
@@ -60,9 +59,9 @@ const CellCountingV8: React.FC = () => {
   const [showClearBatchModal, setShowClearBatchModal] = useState(false);
 
   useEffect(() => {
-    const toStore = { version: SETTINGS_VERSION, showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold };
+    const toStore = { version: SETTINGS_VERSION, showLabels, minScore, strokeWidth, minArea, iouThreshold };
     try { localStorage.setItem('cellCountingSettingsV8', JSON.stringify(toStore)); } catch {}
-  }, [showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold]);
+  }, [showLabels, minScore, strokeWidth, minArea, iouThreshold]);
 
   const toggleClass = (name: string) => {
     setSelectedClasses((prev: Set<string>) => {
@@ -500,7 +499,7 @@ const CellCountingV8: React.FC = () => {
                   <DetectionsOverlay
                     imageUrl={currentBatchItem.url}
                     detections={currentBatchProcessed.filter((d: DetectionBox)=>selectedClasses.has(d.class_name))}
-                    showBoxes={showBoxes}
+                    showBoxes={true}
                     showLabels={showLabels}
                     minScore={minScore}
                     strokeWidth={strokeWidth}
