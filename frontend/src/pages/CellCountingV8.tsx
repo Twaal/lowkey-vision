@@ -182,6 +182,7 @@ const CellCountingV8: React.FC = () => {
     setBatchIndex(0);
     setBatchProgress(0);
     setBatchRunning(false);
+    setSelectedBatchIds(new Set());
     if (uploadInputRef.current) uploadInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
