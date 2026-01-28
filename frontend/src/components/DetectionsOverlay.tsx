@@ -31,7 +31,7 @@ const defaultPalette = ['#10b981', '#ef4444', '#6366f1', '#f59e0b', '#ec4899', '
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 4;
 const ZOOM_WHEEL_SENSITIVITY = 0.003;
-const PAN_WHEEL_SENSITIVITY = 0.7;
+
 const PAN_DRAG_SENSITIVITY = 0.9;
 
 const strokeRoundedRect = (
@@ -91,7 +91,7 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   const detLayerDirty = useRef(true);
   const [imageDims, setImageDims] = useState<{w:number;h:number}|null>(null);
   const lastReadySigRef = useRef<string>('');
-  const wheelPanRef = useRef<{ dx: number; dy: number; raf: number | null }>({ dx: 0, dy: 0, raf: null });
+
 
   useEffect(() => { hasAutoFit.current = false; }, [imageUrl]);
 
@@ -231,41 +231,17 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
       if (isControlled && onScaleChange) onScaleChange(value);
       else setInternalScale(value);
     };
-    const scheduleWheelPan = () => {
-      if (wheelPanRef.current.raf !== null) return;
-      wheelPanRef.current.raf = window.requestAnimationFrame(() => {
-        const { dx, dy } = wheelPanRef.current;
-        wheelPanRef.current.dx = 0;
-        wheelPanRef.current.dy = 0;
-        wheelPanRef.current.raf = null;
-        if (dx === 0 && dy === 0) return;
-        el.scrollLeft += dx * PAN_WHEEL_SENSITIVITY;
-        el.scrollTop += dy * PAN_WHEEL_SENSITIVITY;
-      });
-    };
     const handler = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const current = effectiveScale || 1;
-        const modeScale = e.deltaMode === 1 ? 14 : e.deltaMode === 2 ? 60 : 1;
-        const zoomFactor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY * modeScale);
-        const next = clampScale(parseFloat((current * zoomFactor).toFixed(4)));
-        applyScale(next);
-        return;
-      }
+      if (!(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
-      wheelPanRef.current.dx += e.deltaX;
-      wheelPanRef.current.dy += e.deltaY;
-      scheduleWheelPan();
+      const current = effectiveScale || 1;
+      const modeScale = e.deltaMode === 1 ? 14 : e.deltaMode === 2 ? 60 : 1;
+      const zoomFactor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY * modeScale);
+      const next = clampScale(parseFloat((current * zoomFactor).toFixed(4)));
+      applyScale(next);
     };
     el.addEventListener('wheel', handler, { passive: false });
-    return () => {
-      el.removeEventListener('wheel', handler);
-      if (wheelPanRef.current.raf !== null) {
-        window.cancelAnimationFrame(wheelPanRef.current.raf);
-        wheelPanRef.current.raf = null;
-      }
-    };
+    return () => el.removeEventListener('wheel', handler);
   }, [effectiveScale, isControlled, onScaleChange]);
 
   useEffect(() => {
