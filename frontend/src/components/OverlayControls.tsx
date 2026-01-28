@@ -47,7 +47,15 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
   const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
   const IOU_MIN = 0.01;
   const IOU_MAX = 0.99;
-  const iouInverse = iouThreshold > 0 ? 1 / iouThreshold : 1 / IOU_MAX;
+  const normalizeIouThreshold = (raw: number) => {
+    // Guard against non-finite or non-positive values by falling back to IOU_MAX,
+    // then clamp into the supported [IOU_MIN, IOU_MAX] range.
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return IOU_MAX;
+    }
+    return clamp(raw, IOU_MIN, IOU_MAX);
+  };
+  const iouInverse = 1 / normalizeIouThreshold(iouThreshold);
   const clampIouInverse = (v: number) => {
     const clamped = clamp(v, 1 / IOU_MAX, 1 / IOU_MIN);
     return clamped;
