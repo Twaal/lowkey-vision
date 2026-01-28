@@ -125,6 +125,11 @@ const CellCountingV8: React.FC = () => {
       setBatchIndex((i: number) => Math.min(i, Math.max(0, next.length - 1)));
       return next;
     });
+    setSelectedBatchIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
   const removeBatchItems = (ids: Set<string>) => {
