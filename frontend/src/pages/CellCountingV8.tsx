@@ -688,7 +688,7 @@ const CellCountingV8: React.FC = () => {
                     <li className="flex justify-between"><span>Total</span><span className="font-semibold">{batchAggregated.total}</span></li>
                   </ul>
                   {batchAggregated.viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {batchAggregated.viability.toFixed(1)}%</p>}
-                  <p className="mt-2 text-[11px] text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</p>
+                  <p className="mt-2 text-[11px] text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU overlap &gt; {iouThreshold.toFixed(2)} suppressed)</p>
                 </>
               ) : (
                 <p className="text-gray-500">Add images to see batch totals.</p>
