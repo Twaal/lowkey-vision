@@ -554,20 +554,16 @@ const CellCountingV8: React.FC = () => {
                   </thead>
                   <tbody>
                     {batchItems.map((it: BatchItem,i: number) => (
-                      <tr key={it.id} className="border-t hover:bg-teal-50 cursor-pointer" onClick={()=>setBatchIndex(i)}>
-                        <td className="px-2 py-1">{i+1}</td>
-                        <td className="px-2 py-1 truncate max-w-[220px]">{it.file.name}</td>
-                        <td className="px-2 py-1">{it.status === 'error' ? 'early access' : it.status}</td>
+                      <tr key={it.id} className="border-t hover:bg-teal-50">
+                        <td className="px-2 py-1 cursor-pointer" onClick={()=>setBatchIndex(i)}>{i+1}</td>
+                        <td className="px-2 py-1 truncate max-w-[220px] cursor-pointer" onClick={()=>setBatchIndex(i)}>{it.file.name}</td>
+                        <td className="px-2 py-1 cursor-pointer" onClick={()=>setBatchIndex(i)}>{it.status === 'error' ? 'early access' : it.status}</td>
                         <td className="px-2 py-1">
                           <input
                             type="checkbox"
                             checked={selectedBatchIds.has(it.id)}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              e.stopPropagation();
-                              toggleBatchSelection(it.id);
-                            }}
-                            onClick={(e: React.MouseEvent<HTMLInputElement>) => e.stopPropagation()}
-                            className="h-3.5 w-3.5 accent-teal-600"
+                            onChange={() => toggleBatchSelection(it.id)}
+                            className="h-3.5 w-3.5 accent-teal-600 cursor-pointer"
                             aria-label={`Select ${it.file.name}`}
                           />
                         </td>
