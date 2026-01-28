@@ -28,6 +28,11 @@ interface OverlayProps {
 }
 
 const defaultPalette = ['#10b981', '#ef4444', '#6366f1', '#f59e0b', '#ec4899', '#3b82f6'];
+const ZOOM_MIN = 0.25;
+const ZOOM_MAX = 4;
+const ZOOM_WHEEL_SENSITIVITY = 0.003;
+const PAN_WHEEL_SENSITIVITY = 0.7;
+const PAN_DRAG_SENSITIVITY = 0.9;
 
 const strokeRoundedRect = (
   ctx: CanvasRenderingContext2D,
@@ -86,6 +91,7 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   const detLayerDirty = useRef(true);
   const [imageDims, setImageDims] = useState<{w:number;h:number}|null>(null);
   const lastReadySigRef = useRef<string>('');
+  const wheelPanRef = useRef<{ dx: number; dy: number; raf: number | null }>({ dx: 0, dy: 0, raf: null });
 
   useEffect(() => { hasAutoFit.current = false; }, [imageUrl]);
 
@@ -117,7 +123,7 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     const scaleW = availW / w;
     const scaleH = availH / h;
     const unclamped = Math.min(scaleW, scaleH);
-    const fitScale = Math.max(0.2, Math.min(unclamped, 5));
+    const fitScale = Math.max(ZOOM_MIN, Math.min(unclamped, ZOOM_MAX));
     const curr = effectiveScale || 1;
     if (Math.abs(fitScale - curr) > 0.01) {
       hasAutoFit.current = true;
@@ -220,15 +226,46 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    const clampScale = (value: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value));
+    const applyScale = (value: number) => {
+      if (isControlled && onScaleChange) onScaleChange(value);
+      else setInternalScale(value);
+    };
+    const scheduleWheelPan = () => {
+      if (wheelPanRef.current.raf !== null) return;
+      wheelPanRef.current.raf = window.requestAnimationFrame(() => {
+        const { dx, dy } = wheelPanRef.current;
+        wheelPanRef.current.dx = 0;
+        wheelPanRef.current.dy = 0;
+        wheelPanRef.current.raf = null;
+        if (dx === 0 && dy === 0) return;
+        el.scrollLeft += dx * PAN_WHEEL_SENSITIVITY;
+        el.scrollTop += dy * PAN_WHEEL_SENSITIVITY;
+      });
+    };
     const handler = (e: WheelEvent) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const current = effectiveScale || 1;
+        const modeScale = e.deltaMode === 1 ? 14 : e.deltaMode === 2 ? 60 : 1;
+        const zoomFactor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY * modeScale);
+        const next = clampScale(parseFloat((current * zoomFactor).toFixed(4)));
+        applyScale(next);
+        return;
+      }
       e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.1 : -0.1;
-      const next = Math.min(5, Math.max(0.2, (effectiveScale || 1) + delta));
-      if (isControlled && onScaleChange) onScaleChange(next); else setInternalScale(next);
+      wheelPanRef.current.dx += e.deltaX;
+      wheelPanRef.current.dy += e.deltaY;
+      scheduleWheelPan();
     };
     el.addEventListener('wheel', handler, { passive: false });
-    return () => el.removeEventListener('wheel', handler);
+    return () => {
+      el.removeEventListener('wheel', handler);
+      if (wheelPanRef.current.raf !== null) {
+        window.cancelAnimationFrame(wheelPanRef.current.raf);
+        wheelPanRef.current.raf = null;
+      }
+    };
   }, [effectiveScale, isControlled, onScaleChange]);
 
   useEffect(() => {
@@ -249,8 +286,8 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
       if (!panState.current.panning) return;
       const dx = e.clientX - panState.current.startX;
       const dy = e.clientY - panState.current.startY;
-      el.scrollLeft = panState.current.startScrollLeft - dx;
-      el.scrollTop = panState.current.startScrollTop - dy;
+      el.scrollLeft = panState.current.startScrollLeft - dx * PAN_DRAG_SENSITIVITY;
+      el.scrollTop = panState.current.startScrollTop - dy * PAN_DRAG_SENSITIVITY;
       e.preventDefault();
     };
     const handleUp = () => {
@@ -318,7 +355,7 @@ const DetectionsOverlay: React.FC<OverlayProps> = ({
     <div
       ref={containerRef}
       className="w-full overflow-auto border rounded bg-neutral-50 relative max-h-[calc(100vh-220px)] h-[calc(100vh-220px)] min-h-[320px]"
-      style={{ cursor: annotationMode ? 'crosshair' : (isPanning ? 'grabbing' : 'grab') }}
+      style={{ cursor: annotationMode ? 'crosshair' : (isPanning ? 'grabbing' : 'grab'), touchAction: annotationMode ? 'none' : 'pan-x pan-y' }}
     >
       <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: 'top left', display: 'inline-block' }}>
         <canvas ref={canvasRef} className="object-contain" />
