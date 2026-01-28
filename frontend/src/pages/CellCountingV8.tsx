@@ -120,6 +120,10 @@ const CellCountingV8: React.FC = () => {
 
   const removeBatchItem = (id: string) => {
     setBatchItems((items: BatchItem[]) => {
+      const itemToRemove = items.find((i: BatchItem) => i.id === id);
+      if (itemToRemove) {
+        URL.revokeObjectURL(itemToRemove.url);
+      }
       const next = items.filter((i: BatchItem) => i.id !== id);
       setBatchProgress((p: number) => Math.min(p, next.length));
       setBatchIndex((i: number) => Math.min(i, Math.max(0, next.length - 1)));
@@ -135,6 +139,11 @@ const CellCountingV8: React.FC = () => {
   const removeBatchItems = (ids: Set<string>) => {
     if (!ids.size) return;
     setBatchItems((items: BatchItem[]) => {
+      items.forEach((i: BatchItem) => {
+        if (ids.has(i.id)) {
+          URL.revokeObjectURL(i.url);
+        }
+      });
       const next = items.filter((i: BatchItem) => !ids.has(i.id));
       setBatchProgress((p: number) => Math.min(p, next.length));
       setBatchIndex((i: number) => Math.min(i, Math.max(0, next.length - 1)));
@@ -183,7 +192,12 @@ const CellCountingV8: React.FC = () => {
   };
 
   const clearBatch = () => {
-    setBatchItems([]);
+    setBatchItems((items: BatchItem[]) => {
+      items.forEach((i: BatchItem) => {
+        URL.revokeObjectURL(i.url);
+      });
+      return [];
+    });
     setBatchIndex(0);
     setBatchProgress(0);
     setBatchRunning(false);
@@ -247,7 +261,12 @@ const CellCountingV8: React.FC = () => {
       lines.push([it.file.name, alive, dead, alive+dead, viability?.toFixed(2) || '', it.manualDetections.length].join(','));
     });
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'batch_cell_counts_v8.csv'; a.click();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'batch_cell_counts_v8.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const iou = (a: DetectionBox, b: DetectionBox): number => {
