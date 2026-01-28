@@ -266,7 +266,8 @@ const CellCountingV8: React.FC = () => {
     a.href = url;
     a.download = 'batch_cell_counts_v8.csv';
     a.click();
-    URL.revokeObjectURL(url);
+    // Delay revocation to ensure browser has time to process the download
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   const iou = (a: DetectionBox, b: DetectionBox): number => {
