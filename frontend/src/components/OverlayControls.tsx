@@ -188,7 +188,7 @@ const OverlayControls: React.FC<OverlayControlsProps> = ({
               <span className="text-xs text-gray-500">px²</span>
             </label>
             <label className={`flex items-center space-x-2 ${isCompact ? 'text-xs' : ''}`}>
-              <span>1/IOU ≤ {iouInverse.toFixed(2)}</span>
+              <span>1/IOU ≥ {iouInverse.toFixed(2)}</span>
               <input
                 type="range"
                 min={(1 / IOU_MAX).toFixed(2)}
