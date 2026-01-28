@@ -563,7 +563,7 @@ const CellCountingV8: React.FC = () => {
                             type="checkbox"
                             checked={selectedBatchIds.has(it.id)}
                             onChange={() => toggleBatchSelection(it.id)}
-                            className="h-3.5 w-3.5 accent-teal-600 cursor-pointer"
+                            className="h-3.5 w-3.5 accent-teal-600"
                             aria-label={`Select ${it.file.name}`}
                           />
                         </td>
