@@ -15,14 +15,16 @@ export const createImagePreviewUrl = async (file: File): Promise<string> => {
   }
 
   let canvas: HTMLCanvasElement | null = null;
+  let buffer: ArrayBuffer | null = null;
+  let rgba: ArrayBuffer | null = null;
   try {
-    const buffer = await file.arrayBuffer();
+    buffer = await file.arrayBuffer();
     const ifds = UTIF.decode(buffer);
     if (!ifds.length) {
       throw new Error('Unable to decode TIFF');
     }
     UTIF.decodeImage(buffer, ifds[0]);
-    const rgba = UTIF.toRGBA8(ifds[0]);
+    rgba = UTIF.toRGBA8(ifds[0]);
     const rawWidth = (ifds[0] as { width?: unknown }).width;
     const rawHeight = (ifds[0] as { height?: unknown }).height;
     if (
@@ -49,12 +51,15 @@ export const createImagePreviewUrl = async (file: File): Promise<string> => {
     const dataUrl = canvas.toDataURL('image/png');
     return dataUrl;
   } finally {
-    // Explicitly clear canvas reference to help garbage collection
-    // The canvas and its resources will be cleaned up by the browser
+    // Explicitly clear references to help garbage collection
+    // This is especially important for large TIFF files
     if (canvas) {
       canvas.width = 0;
       canvas.height = 0;
+      canvas = null;
     }
+    buffer = null;
+    rgba = null;
   }
 };
 
