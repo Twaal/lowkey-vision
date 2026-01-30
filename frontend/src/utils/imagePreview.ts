@@ -20,15 +20,16 @@ export const createImagePreviewUrl = async (file: File): Promise<string> => {
   if (!ifds.length) {
     throw new Error('Unable to decode TIFF');
   }
-  UTIF.decodeImage(buffer, ifds[0]);
-  const rgba = UTIF.toRGBA8(ifds[0]);
+  
+  // Validate dimensions before expensive decode operations to prevent performance issues
   const width = ifds[0].width as number;
   const height = ifds[0].height as number;
-  
-  // Validate dimensions to prevent performance issues or browser crashes
   if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
     throw new Error(`TIFF image dimensions (${width}x${height}) exceed maximum allowed size of ${MAX_IMAGE_DIMENSION}x${MAX_IMAGE_DIMENSION} pixels`);
   }
+  
+  UTIF.decodeImage(buffer, ifds[0]);
+  const rgba = UTIF.toRGBA8(ifds[0]);
   
   const canvas = document.createElement('canvas');
   canvas.width = width;
