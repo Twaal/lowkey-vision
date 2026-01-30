@@ -4,7 +4,7 @@ import { getFileExtension } from './fileTypes';
 const TIFF_EXTENSIONS = new Set(['.tif', '.tiff']);
 
 export const isTiffFile = (file: File): boolean => {
-  if (file.type === 'image/tiff') return true;
+  if (file.type && file.type.startsWith('image/tif')) return true;
   const ext = getFileExtension(file.name);
   return TIFF_EXTENSIONS.has(ext);
 };
