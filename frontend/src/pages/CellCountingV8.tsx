@@ -78,12 +78,12 @@ const CellCountingV8: React.FC = () => {
     if (!fileList) return;
     const files = Array.from(fileList);
     const accepted: File[] = [];
-    const rejected: File[] = [];
+    const rejectedUnsupported: File[] = [];
     files.forEach((f: File) => {
       if (isAcceptedImageFile(f)) {
         accepted.push(f);
       } else {
-        rejected.push(f);
+        rejectedUnsupported.push(f);
       }
     });
     let newItems: BatchItem[] = [];
@@ -108,14 +108,25 @@ const CellCountingV8: React.FC = () => {
         manualDetections: []
       }));
     }
-    if (previewFailed.length) {
-      rejected.push(...previewFailed);
-    }
-    if (rejected.length) {
-      const details = rejected
+    
+    const errorMessages: string[] = [];
+    if (rejectedUnsupported.length) {
+      const details = rejectedUnsupported
         .map((f: File) => `${f.name}${f.type ? ` (${f.type})` : ''}`)
         .join(', ');
-      setBatchError(`Some files were not added (unsupported type or failed to render preview): ${details}.`);
+      const count = rejectedUnsupported.length;
+      errorMessages.push(`${count} ${count === 1 ? 'file' : 'files'} rejected due to unsupported type: ${details}`);
+    }
+    if (previewFailed.length) {
+      const details = previewFailed
+        .map((f: File) => `${f.name}${f.type ? ` (${f.type})` : ''}`)
+        .join(', ');
+      const count = previewFailed.length;
+      errorMessages.push(`${count} ${count === 1 ? 'file' : 'files'} failed to render preview: ${details}`);
+    }
+    
+    if (errorMessages.length) {
+      setBatchError(errorMessages.join('. ') + '.');
     } else {
       setBatchError(null);
     }
