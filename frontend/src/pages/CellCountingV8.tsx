@@ -26,15 +26,15 @@ const CellCountingV8: React.FC = () => {
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchRunning, setBatchRunning] = useState(false);
   const [batchIndex, setBatchIndex] = useState(0);
-  const [batchProgress, setBatchProgress] = useState<{ processed: number; total: number }>({ processed: 0, total: 0 });
+  const [batchProgress, setBatchProgress] = useState(0);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const currentBatchItem = batchItems[batchIndex];
-  const SETTINGS_VERSION = 4;
+  const SETTINGS_VERSION = 5;
   const rawStored = typeof window !== 'undefined' ? (() => {
     try { return JSON.parse(localStorage.getItem('cellCountingSettingsV8')||'null'); } catch { return null; }
   })() : null;
   const storedSettings = rawStored && rawStored.version === SETTINGS_VERSION ? rawStored : null;
-  const [showBoxes, setShowBoxes] = useState<boolean>(storedSettings?.showBoxes ?? true);
   const [showLabels, setShowLabels] = useState<boolean>(storedSettings?.showLabels ?? false);
   const [minScore, setMinScore] = useState<number>(storedSettings?.minScore ?? 0.1);
   const CLASS_TOGGLES = ['live', 'dead'] as const;
@@ -49,14 +49,19 @@ const CellCountingV8: React.FC = () => {
   const [newBoxClass, setNewBoxClass] = useState('live');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [minArea, setMinArea] = useState<number>(storedSettings?.minArea ?? 10);
-  const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.01);
-  const [showTools, setShowTools] = useState(true);
+  const [iouThreshold, setIouThreshold] = useState<number>(storedSettings?.iouThreshold ?? 0.9);
+  const [showTools, setShowTools] = useState(false);
   const [showEarlyAccessModal, setShowEarlyAccessModal] = useState(false);
+  const [showRemoveCurrentModal, setShowRemoveCurrentModal] = useState(false);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+  const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set());
+  const [showRemoveSelectedModal, setShowRemoveSelectedModal] = useState(false);
+  const [showClearBatchModal, setShowClearBatchModal] = useState(false);
 
   useEffect(() => {
-    const toStore = { version: SETTINGS_VERSION, showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold };
+    const toStore = { version: SETTINGS_VERSION, showLabels, minScore, strokeWidth, minArea, iouThreshold };
     try { localStorage.setItem('cellCountingSettingsV8', JSON.stringify(toStore)); } catch {}
-  }, [showBoxes, showLabels, minScore, strokeWidth, minArea, iouThreshold]);
+  }, [showLabels, minScore, strokeWidth, minArea, iouThreshold]);
 
   const toggleClass = (name: string) => {
     setSelectedClasses((prev: Set<string>) => {
@@ -67,13 +72,14 @@ const CellCountingV8: React.FC = () => {
   };
 
   const acceptableTypes = new Set(['image/jpeg','image/png','image/tiff']);
-  const prevTotal = (prev: BatchItem[], added: number) => prev.length + added;
   const handleBatchFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     const files = Array.from(fileList).filter((f: File) => acceptableTypes.has(f.type));
     const newItems: BatchItem[] = files.map((f: File) => ({ id: crypto.randomUUID(), file: f, url: URL.createObjectURL(f), status: 'pending', manualDetections: [] }));
-    setBatchItems((prev: BatchItem[]) => [...prev, ...newItems]);
-    setBatchProgress((p: { processed: number; total: number }) => ({ processed: p.processed, total: prevTotal(batchItems, newItems.length) }));
+    setBatchItems((prev: BatchItem[]) => {
+      const next = [...prev, ...newItems];
+      return next;
+    });
   };
 
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +93,6 @@ const CellCountingV8: React.FC = () => {
     if (batchRunning || !batchItems.length) return;
     setBatchRunning(true);
     let processed = 0;
-    const total = batchItems.length;
     let firstShown = false;
     for (let i = 0; i < batchItems.length; i++) {
       setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === batchItems[i].id ? { ...it, status: 'processing' } : it));
@@ -107,18 +112,112 @@ const CellCountingV8: React.FC = () => {
         setShowEarlyAccessModal(true);
       }
       processed++;
-      setBatchProgress({ processed, total });
+      setBatchProgress(processed);
     }
     setBatchRunning(false);
   }, [batchItems, batchRunning]);
 
   const removeBatchItem = (id: string) => {
-    setBatchItems((items: BatchItem[]) => items.filter((i: BatchItem) => i.id !== id));
-    setBatchProgress((p: { processed: number; total: number }) => ({ processed: Math.min(p.processed, Math.max(0, batchItems.length - 1)), total: Math.max(0, batchItems.length - 1) }));
-    setBatchIndex((i: number) => Math.min(i, Math.max(0, batchItems.length - 2)));
+    setBatchItems((items: BatchItem[]) => {
+      const itemToRemove = items.find((i: BatchItem) => i.id === id);
+      if (itemToRemove) {
+        URL.revokeObjectURL(itemToRemove.url);
+      }
+      const next = items.filter((i: BatchItem) => i.id !== id);
+      setBatchProgress((p: number) => Math.min(p, next.length));
+      setBatchIndex((i: number) => Math.min(i, Math.max(0, next.length - 1)));
+      return next;
+    });
+    setSelectedBatchIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
   };
 
-  const clearBatch = () => { setBatchItems([]); setBatchIndex(0); setBatchProgress({ processed: 0, total: 0 }); setBatchRunning(false); };
+  const removeBatchItems = (ids: Set<string>) => {
+    if (!ids.size) return;
+    setBatchItems((items: BatchItem[]) => {
+      items.forEach((i: BatchItem) => {
+        if (ids.has(i.id)) {
+          URL.revokeObjectURL(i.url);
+        }
+      });
+      const next = items.filter((i: BatchItem) => !ids.has(i.id));
+      setBatchProgress((p: number) => Math.min(p, next.length));
+      setBatchIndex((i: number) => Math.min(i, Math.max(0, next.length - 1)));
+      return next;
+    });
+    setSelectedBatchIds(new Set());
+  };
+
+  const requestRemoveCurrent = () => {
+    if (!currentBatchItem) return;
+    setPendingRemoveId(currentBatchItem.id);
+    setShowRemoveCurrentModal(true);
+  };
+
+  const confirmRemoveCurrent = () => {
+    if (pendingRemoveId) removeBatchItem(pendingRemoveId);
+    setPendingRemoveId(null);
+    setShowRemoveCurrentModal(false);
+  };
+
+  const cancelRemoveCurrent = () => {
+    setPendingRemoveId(null);
+    setShowRemoveCurrentModal(false);
+  };
+
+  const requestRemoveSelected = () => {
+    if (!selectedBatchIds.size) return;
+    setShowRemoveSelectedModal(true);
+  };
+
+  const confirmRemoveSelected = () => {
+    removeBatchItems(selectedBatchIds);
+    setShowRemoveSelectedModal(false);
+  };
+
+  const cancelRemoveSelected = () => {
+    setShowRemoveSelectedModal(false);
+  };
+
+  const toggleBatchSelection = (id: string) => {
+    setSelectedBatchIds((prev: Set<string>) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const clearBatch = () => {
+    setBatchItems((items: BatchItem[]) => {
+      items.forEach((i: BatchItem) => {
+        URL.revokeObjectURL(i.url);
+      });
+      return [];
+    });
+    setBatchIndex(0);
+    setBatchProgress(0);
+    setBatchRunning(false);
+    setSelectedBatchIds(new Set());
+    if (uploadInputRef.current) uploadInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+  };
+
+  const requestClearBatch = () => {
+    if (!batchItems.length) return;
+    setShowClearBatchModal(true);
+  };
+
+  const confirmClearBatch = () => {
+    clearBatch();
+    setShowClearBatchModal(false);
+  };
+
+  const cancelClearBatch = () => {
+    setShowClearBatchModal(false);
+  };
 
   const captureOverlay = (dataUrl?: string) => {
     if (!dataUrl || !currentBatchItem) return;
@@ -161,7 +260,13 @@ const CellCountingV8: React.FC = () => {
       lines.push([it.file.name, alive, dead, alive+dead, viability?.toFixed(2) || '', it.manualDetections.length].join(','));
     });
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'batch_cell_counts_v8.csv'; a.click();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'batch_cell_counts_v8.csv';
+    a.click();
+    // Delay revocation to ensure browser has time to process the download
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const iou = (a: DetectionBox, b: DetectionBox): number => {
@@ -181,7 +286,7 @@ const CellCountingV8: React.FC = () => {
       return area >= minArea && d.score >= minScore;
     });
     let kept: DetectionBox[] = [];
-    if (iouThreshold > 0 && iouThreshold < 0.99) {
+    if (iouThreshold > 0 && iouThreshold <= 0.99) {
       const sorted = [...modelOnly].sort((a,b)=>b.score - a.score);
       sorted.forEach(cand => {
         const overlaps = kept.some(k => k.class_name === cand.class_name && iou(k, cand) > iouThreshold);
@@ -253,11 +358,106 @@ const CellCountingV8: React.FC = () => {
           </div>
         </div>
       )}
+      {showRemoveCurrentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Remove image?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              This will remove the current image from the batch. This can’t be undone.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={cancelRemoveCurrent}
+                className="px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemoveCurrent}
+                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showRemoveSelectedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Remove selected images?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              This will remove {selectedBatchIds.size} selected image{selectedBatchIds.size === 1 ? '' : 's'} from the batch. This can’t be undone.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={cancelRemoveSelected}
+                className="px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemoveSelected}
+                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showClearBatchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Clear batch?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              This will remove all images from the batch. This can’t be undone.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={cancelClearBatch}
+                className="px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmClearBatch}
+                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+              >
+                Clear batch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-4 sticky top-12 z-40 flex flex-wrap items-center gap-3 bg-white border rounded px-3 py-2">
         <div className="flex items-center gap-2">
-          <FolderOpen className="w-4 h-4 text-gray-600" />
-          <label className="text-xs font-medium text-gray-600">Upload</label>
-          <input type="file" multiple accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleBatchFiles(e.target.files)} className="text-xs" />
+          <button
+            type="button"
+            onClick={() => uploadInputRef.current?.click()}
+            disabled={batchRunning}
+            className="inline-flex items-center gap-2 px-3 py-1.5 border rounded text-xs bg-white hover:bg-gray-50 disabled:opacity-50"
+          >
+            <FolderOpen className="w-4 h-4" />
+            Upload
+          </button>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              handleBatchFiles(e.target.files);
+              e.target.value = '';
+            }}
+            className="hidden"
+          />
         </div>
         <input
           ref={cameraInputRef}
@@ -278,7 +478,7 @@ const CellCountingV8: React.FC = () => {
           <Camera className="w-4 h-4"/> Take Photo
         </button>
         <button onClick={runBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-teal-600 text-white rounded disabled:bg-gray-400"><Play className="w-4 h-4"/>{batchRunning?'Running...':'Start Batch'}</button>
-        <button onClick={clearBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50 disabled:opacity-50"><Trash2 className="w-4 h-4"/>Clear Batch</button>
+        <button onClick={requestClearBatch} disabled={!batchItems.length || batchRunning} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs border rounded bg-white hover:bg-gray-50 disabled:opacity-50"><Trash2 className="w-4 h-4"/>Clear Batch</button>
         <button
           type="button"
           onClick={() => setShowTools((v: boolean) => !v)}
@@ -287,18 +487,30 @@ const CellCountingV8: React.FC = () => {
           {showTools ? 'Hide Tools' : 'Show Tools'}
         </button>
         {batchItems.length>0 && (
-          <div className="text-[11px] text-gray-600">Progress: {batchProgress.processed}/{batchItems.length}</div>
+          <div className="text-[11px] text-gray-600">Progress: {batchProgress}/{batchItems.length}</div>
         )}
       </div>
 
-      <div className={`grid grid-cols-1 ${showTools ? 'lg:grid-cols-[minmax(0,1fr)_320px]' : ''} gap-4`}>
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
         <div className="space-y-4">
           {currentBatchItem ? (
             currentBatchItem.result ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between bg-white border rounded px-3 py-2">
-                  <div className="text-sm font-medium truncate">Image {batchIndex+1} / {batchItems.length}: {currentBatchItem.file.name}</div>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={requestRemoveCurrent}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] border rounded text-red-600 hover:bg-red-50"
+                      title="Remove current image from batch"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Remove
+                    </button>
+                    <div className="text-sm font-medium truncate">{currentBatchItem.file.name}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-600">{batchIndex+1} / {batchItems.length}</span>
                     <button onClick={()=>setBatchIndex((i: number)=>Math.max(0,i-1))} disabled={batchIndex===0} className="p-2 border rounded disabled:opacity-40"><ChevronLeft className="w-4 h-4"/></button>
                     <button onClick={()=>setBatchIndex((i: number)=>Math.min(batchItems.length-1,i+1))} disabled={batchIndex===batchItems.length-1} className="p-2 border rounded disabled:opacity-40"><ChevronRight className="w-4 h-4"/></button>
                   </div>
@@ -307,7 +519,7 @@ const CellCountingV8: React.FC = () => {
                   <DetectionsOverlay
                     imageUrl={currentBatchItem.url}
                     detections={currentBatchProcessed.filter((d: DetectionBox)=>selectedClasses.has(d.class_name))}
-                    showBoxes={showBoxes}
+                    showBoxes={true}
                     showLabels={showLabels}
                     minScore={minScore}
                     strokeWidth={strokeWidth}
@@ -323,8 +535,7 @@ const CellCountingV8: React.FC = () => {
               </div>
             ) : (
               <div className="p-6 bg-white border rounded text-sm text-gray-600">
-                <div className="animate-pulse mb-2 font-medium">Processing image {batchIndex+1} of {batchItems.length}…</div>
-                <div>This view will update automatically once the first image finishes. The rest will continue processing in the background.</div>
+                <div className="animate-pulse mb-2 font-medium">Start batch of {batchItems.length} images</div>
               </div>
             )
           ) : (
@@ -339,7 +550,17 @@ const CellCountingV8: React.FC = () => {
 
           {batchItems.length>0 && (
             <div className="border rounded bg-white">
-              <div className="px-3 py-2 border-b text-xs font-semibold text-gray-700">Batch Queue</div>
+              <div className="px-3 py-2 border-b flex items-center justify-between text-xs font-semibold text-gray-700">
+                <span>Batch Queue</span>
+                <button
+                  type="button"
+                  onClick={requestRemoveSelected}
+                  disabled={!selectedBatchIds.size}
+                  className="inline-flex items-center gap-1 px-2 py-1 border rounded text-[11px] text-red-600 bg-white hover:bg-red-50 disabled:opacity-50"
+                >
+                  Remove selected
+                </button>
+              </div>
               <div className="max-h-56 overflow-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50 text-gray-600">
@@ -347,113 +568,149 @@ const CellCountingV8: React.FC = () => {
                       <th className="text-left px-2 py-1">#</th>
                       <th className="text-left px-2 py-1">File</th>
                       <th className="text-left px-2 py-1">Status</th>
-                      <th className="px-2 py-1"></th>
+                      <th className="text-left px-2 py-1">Select</th>
                     </tr>
                   </thead>
                   <tbody>
                     {batchItems.map((it: BatchItem,i: number) => (
-                      <tr key={it.id} className="border-t hover:bg-teal-50 cursor-pointer" onClick={()=>setBatchIndex(i)}>
-                        <td className="px-2 py-1">{i+1}</td>
-                        <td className="px-2 py-1 truncate max-w-[240px]">{it.file.name}</td>
-                        <td className="px-2 py-1">{it.status === 'error' ? 'early access' : it.status}</td>
-                        <td className="px-2 py-1"><button onClick={(e: React.MouseEvent<HTMLButtonElement>)=>{e.stopPropagation(); removeBatchItem(it.id);}} className="text-red-600">×</button></td>
+                      <tr key={it.id} className="border-t hover:bg-teal-50">
+                        <td className="px-2 py-1 cursor-pointer" onClick={()=>setBatchIndex(i)}>{i+1}</td>
+                        <td className="px-2 py-1 truncate max-w-[220px] cursor-pointer" onClick={()=>setBatchIndex(i)}>{it.file.name}</td>
+                        <td className="px-2 py-1 cursor-pointer" onClick={()=>setBatchIndex(i)}>{it.status === 'error' ? 'early access' : it.status}</td>
+                        <td className="px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedBatchIds.has(it.id)}
+                            onChange={() => toggleBatchSelection(it.id)}
+                            className="h-3.5 w-3.5 accent-teal-600"
+                            aria-label={`Select ${it.file.name}`}
+                          />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="p-3 bg-gray-50 flex flex-wrap gap-6 text-[11px] border-t">
-                <div><span className="font-semibold">Batch live:</span> {batchAggregated.alive}</div>
-                <div><span className="font-semibold">Batch dead:</span> {batchAggregated.dead}</div>
-                <div><span className="font-semibold">Total:</span> {batchAggregated.total}</div>
-                <div><span className="font-semibold">Viability:</span> {batchAggregated.viability!==null? batchAggregated.viability.toFixed(1)+'%':', '}</div>
-                <div className="text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU ≤ {iouThreshold.toFixed(2)})</div>
-              </div>
             </div>
           )}
         </div>
 
-        {showTools && (
-          <aside className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-800">Image Tools</h2>
-              <button type="button" onClick={() => setShowTools(false)} className="text-xs px-2 py-1 border rounded hover:bg-gray-50">Hide</button>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] text-gray-600">
-              <span className="font-medium">Class colors</span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.live }} />
-                live
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.dead }} />
-                dead
-              </span>
-            </div>
-            <OverlayControls
-              density="compact"
-              className="mb-0"
-              showAdvanced={showAdvanced}
-              setShowAdvanced={setShowAdvanced}
-              showBoxes={showBoxes} setShowBoxes={setShowBoxes}
-              showLabels={showLabels} setShowLabels={setShowLabels}
-              strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
-              scale={scale} setScale={setScale}
-              annotationMode={annotationMode} setAnnotationMode={setAnnotationMode}
-              newBoxClass={newBoxClass} setNewBoxClass={setNewBoxClass}
-              minScore={minScore} setMinScore={setMinScore}
-              minArea={minArea} setMinArea={setMinArea}
-              iouThreshold={iouThreshold} setIouThreshold={setIouThreshold}
-              availableClasses={availableClasses}
-              selectedClasses={selectedClasses}
-              toggleClass={toggleClass}
-              extraRightButtons={<button onClick={downloadCsv} className="inline-flex items-center gap-1 px-2.5 py-1 border rounded text-[11px] bg-white hover:bg-teal-50"><Download className="w-4 h-4"/>CSV</button>}
-              onClearManualAnnotations={() => {
-                if (!currentBatchItem) return;
-                setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
-              }}
-            />
+        <aside className="flex flex-col gap-3">
+          {showTools && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-800">Image Tools</h2>
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-gray-600">
+                <span className="font-medium">Class colors</span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.live }} />
+                  live
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CLASS_COLORS.dead }} />
+                  dead
+                </span>
+              </div>
+              <OverlayControls
+                density="compact"
+                className="mb-0"
+                showAdvanced={showAdvanced}
+                setShowAdvanced={setShowAdvanced}
+                showLabels={showLabels} setShowLabels={setShowLabels}
+                strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
+                scale={scale} setScale={setScale}
+                annotationMode={annotationMode} setAnnotationMode={setAnnotationMode}
+                newBoxClass={newBoxClass} setNewBoxClass={setNewBoxClass}
+                minScore={minScore} setMinScore={setMinScore}
+                minArea={minArea} setMinArea={setMinArea}
+                iouThreshold={iouThreshold} setIouThreshold={setIouThreshold}
+                availableClasses={availableClasses}
+                selectedClasses={selectedClasses}
+                toggleClass={toggleClass}
+                onClearManualAnnotations={() => {
+                  if (!currentBatchItem) return;
+                  setBatchItems((items: BatchItem[]) => items.map((it: BatchItem) => it.id === currentBatchItem.id ? { ...it, manualDetections: [] } : it));
+                }}
+              />
 
-            {currentBatchItem && currentBatchItem.result ? (
-              <>
-                <div className="bg-white border rounded p-3 text-xs">
-                  <h3 className="font-medium mb-2">Counts</h3>
-                  {(() => {
-                    const filtered = currentBatchProcessed.filter((d: DetectionBox)=>d.score>=minScore && selectedClasses.has(d.class_name));
-                    const { counts, viability } = computeCounts(filtered);
-                    return <>
-                      <ul className="space-y-1">
-                        {Object.entries(counts).map(([k,v]) => (
-                          <li key={k} className="flex justify-between"><span>{k}</span><span className="font-semibold">{v}</span></li>
+              {currentBatchItem && currentBatchItem.result ? (
+                <>
+                  {currentBatchItem.manualDetections.length>0 && (
+                    <div className="bg-white border rounded p-3 text-[11px]">
+                      <h4 className="font-medium mb-2">Manual Annotations</h4>
+                      <ul className="space-y-1 max-h-40 overflow-auto">
+                        {currentBatchItem.manualDetections.map((d: DetectionBox) => (
+                          <li key={d.id} className="flex items-center justify-between gap-2">
+                            <span className="truncate">{d.class_name} [{d.bbox.map((n: number)=>n.toFixed(0)).join(',')}]</span>
+                            <button onClick={()=>d.id && removeBatchManual(d.id!)} className="text-red-600 hover:underline">Remove</button>
+                          </li>
                         ))}
                       </ul>
-                      {viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {viability.toFixed(1)}%</p>}
-                      {currentBatchItem.manualDetections.length>0 && <p className="mt-2 text-[11px] text-gray-500">{currentBatchItem.manualDetections.length} manual annotation{currentBatchItem.manualDetections.length>1?'s':''} added.</p>}
-                    </>;
-                  })()}
+                      <p className="mt-2 text-[10px] text-gray-500">Manual boxes shown dashed.</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="bg-white border rounded p-3 text-xs text-gray-500">
+                  Run the batch to see annotations.
                 </div>
-                {currentBatchItem.manualDetections.length>0 && (
-                  <div className="bg-white border rounded p-3 text-[11px]">
-                    <h4 className="font-medium mb-2">Manual Annotations</h4>
-                    <ul className="space-y-1 max-h-40 overflow-auto">
-                      {currentBatchItem.manualDetections.map((d: DetectionBox) => (
-                        <li key={d.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{d.class_name} [{d.bbox.map((n: number)=>n.toFixed(0)).join(',')}]</span>
-                          <button onClick={()=>d.id && removeBatchManual(d.id!)} className="text-red-600 hover:underline">Remove</button>
-                        </li>
+              )}
+            </div>
+          )}
+
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
+            {currentBatchItem && currentBatchItem.result ? (
+              <div className="bg-white border rounded p-3 text-xs">
+                <h3 className="font-medium mb-2">Image totals</h3>
+                {(() => {
+                  const filtered = currentBatchProcessed.filter((d: DetectionBox)=>d.score>=minScore && selectedClasses.has(d.class_name));
+                  const { counts, viability } = computeCounts(filtered);
+                  return <>
+                    <ul className="space-y-1">
+                      {Object.entries(counts).map(([k,v]) => (
+                        <li key={k} className="flex justify-between"><span>{k}</span><span className="font-semibold">{v}</span></li>
                       ))}
                     </ul>
-                    <p className="mt-2 text-[10px] text-gray-500">Manual boxes shown dashed.</p>
-                  </div>
-                )}
-              </>
+                    {viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {viability.toFixed(1)}%</p>}
+                    {currentBatchItem.manualDetections.length>0 && <p className="mt-2 text-[11px] text-gray-500">{currentBatchItem.manualDetections.length} manual annotation{currentBatchItem.manualDetections.length>1?'s':''} added.</p>}
+                  </>;
+                })()}
+              </div>
             ) : (
               <div className="bg-white border rounded p-3 text-xs text-gray-500">
-                Run the batch to see counts and annotations.
+                Run the batch to see image totals.
               </div>
             )}
-          </aside>
-        )}
+
+            <div className="bg-white border rounded p-3 text-xs">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-medium">Batch totals</h3>
+                <button
+                  onClick={downloadCsv}
+                  disabled={!batchItems.length}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 border rounded text-[11px] bg-white hover:bg-teal-50 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  CSV
+                </button>
+              </div>
+              {batchItems.length>0 ? (
+                <>
+                  <ul className="space-y-1">
+                    <li className="flex justify-between"><span>Batch live</span><span className="font-semibold">{batchAggregated.alive}</span></li>
+                    <li className="flex justify-between"><span>Batch dead</span><span className="font-semibold">{batchAggregated.dead}</span></li>
+                    <li className="flex justify-between"><span>Total</span><span className="font-semibold">{batchAggregated.total}</span></li>
+                  </ul>
+                  {batchAggregated.viability!==null && <p className="mt-3 text-teal-700 font-medium">Viability: {batchAggregated.viability.toFixed(1)}%</p>}
+                  <p className="mt-2 text-[11px] text-gray-500">(Filtered results: score ≥ {(minScore*100).toFixed(0)}%, area ≥ {minArea}px², IOU overlap &gt; {(1 / iouThreshold).toFixed(2)} suppressed)</p>
+                </>
+              ) : (
+                <p className="text-gray-500">Add images to see batch totals.</p>
+              )}
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
