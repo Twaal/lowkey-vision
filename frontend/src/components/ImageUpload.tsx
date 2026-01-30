@@ -152,7 +152,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 Drop your image here, or click to browse
               </p>
               <p className="text-gray-500">
-                Supports common image formats (JPEG, PNG, TIFF, BMP, and more) up to 20MB
+                Supports common image formats like JPEG and PNG up to 20MB
               </p>
             </div>
           </div>
