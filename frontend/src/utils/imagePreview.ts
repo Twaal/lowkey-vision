@@ -2,6 +2,7 @@ import * as UTIF from 'utif';
 import { getFileExtension } from './fileTypes';
 
 const TIFF_EXTENSIONS = new Set(['.tif', '.tiff']);
+const MAX_IMAGE_DIMENSION = 10000;
 
 export const isTiffFile = (file: File): boolean => {
   if (file.type && file.type.startsWith('image/tif')) return true;
@@ -23,6 +24,12 @@ export const createImagePreviewUrl = async (file: File): Promise<string> => {
   const rgba = UTIF.toRGBA8(ifds[0]);
   const width = ifds[0].width as number;
   const height = ifds[0].height as number;
+  
+  // Validate dimensions to prevent performance issues or browser crashes
+  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+    throw new Error(`TIFF image dimensions (${width}x${height}) exceed maximum allowed size of ${MAX_IMAGE_DIMENSION}x${MAX_IMAGE_DIMENSION} pixels`);
+  }
+  
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
