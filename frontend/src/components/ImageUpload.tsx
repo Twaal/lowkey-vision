@@ -76,8 +76,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       const url = await createImagePreviewUrl(file);
       setPreviewUrlSafe(url);
     } catch (e: any) {
+      // Keep the selected file when preview rendering fails so the user
+      // can distinguish this case from validation errors and potentially recover.
+      setPreviewUrlSafe(null);
       setError(e?.message || 'Unable to render image preview');
-      clearSelection({ reset: hasResult });
     }
   };
 
