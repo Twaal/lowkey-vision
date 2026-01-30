@@ -21,8 +21,20 @@ export const createImagePreviewUrl = async (file: File): Promise<string> => {
   }
   UTIF.decodeImage(buffer, ifds[0]);
   const rgba = UTIF.toRGBA8(ifds[0]);
-  const width = ifds[0].width as number;
-  const height = ifds[0].height as number;
+  const rawWidth = (ifds[0] as { width?: unknown }).width;
+  const rawHeight = (ifds[0] as { height?: unknown }).height;
+  if (
+    typeof rawWidth !== 'number' ||
+    !Number.isFinite(rawWidth) ||
+    rawWidth <= 0 ||
+    typeof rawHeight !== 'number' ||
+    !Number.isFinite(rawHeight) ||
+    rawHeight <= 0
+  ) {
+    throw new Error('Invalid TIFF dimensions');
+  }
+  const width = rawWidth;
+  const height = rawHeight;
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
