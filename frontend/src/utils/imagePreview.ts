@@ -27,8 +27,18 @@ export const createImagePreviewUrl = async (file: File, pageIndex: number = 0): 
       console.warn(`TIFF file "${file.name}" contains ${ifds.length} pages. Only the first page will be displayed.`);
     }
 
-    // Use the requested page or default to first page
+    // Validate and use the requested page or default to first page
+    if (pageIndex < 0) {
+      throw new Error(`Invalid page index ${pageIndex}. Page index must be non-negative.`);
+    }
+    
     const actualPage = Math.min(pageIndex, ifds.length - 1);
+    
+    // Warn if requested page doesn't exist
+    if (pageIndex > 0 && pageIndex >= ifds.length) {
+      console.warn(`TIFF file "${file.name}" only has ${ifds.length} page(s), but page ${pageIndex + 1} was requested. Showing page ${actualPage + 1} instead.`);
+    }
+    
     const ifd = ifds[actualPage];
 
     if (!ifd.width || !ifd.height) {
