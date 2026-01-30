@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import DetectionsOverlay, { DetectionBox } from '../components/DetectionsOverlay';
 import OverlayControls from '../components/OverlayControls';
-import { Download, FolderOpen, Play, Pause, ChevronLeft, ChevronRight, Camera, Trash2 } from 'lucide-react';
+import { Download, FolderOpen, Play, ChevronLeft, ChevronRight, Camera, Trash2, X } from 'lucide-react';
+import { ACCEPTED_IMAGE_ACCEPT_ATTR, isAcceptedImageFile } from '../utils/fileTypes';
+import { createImagePreviewUrl, shouldRevokeObjectUrl } from '../utils/imagePreview';
 
 interface PredictionResponse {
   model: string;
@@ -57,6 +59,7 @@ const CellCountingV8: React.FC = () => {
   const [selectedBatchIds, setSelectedBatchIds] = useState<Set<string>>(new Set());
   const [showRemoveSelectedModal, setShowRemoveSelectedModal] = useState(false);
   const [showClearBatchModal, setShowClearBatchModal] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
 
   useEffect(() => {
     const toStore = { version: SETTINGS_VERSION, showLabels, minScore, strokeWidth, minArea, iouThreshold };
@@ -71,11 +74,51 @@ const CellCountingV8: React.FC = () => {
     });
   };
 
-  const acceptableTypes = new Set(['image/jpeg','image/png','image/tiff']);
-  const handleBatchFiles = (fileList: FileList | null) => {
+  const handleBatchFiles = async (fileList: FileList | null) => {
     if (!fileList) return;
-    const files = Array.from(fileList).filter((f: File) => acceptableTypes.has(f.type));
-    const newItems: BatchItem[] = files.map((f: File) => ({ id: crypto.randomUUID(), file: f, url: URL.createObjectURL(f), status: 'pending', manualDetections: [] }));
+    const files = Array.from(fileList);
+    const accepted: File[] = [];
+    const rejected: File[] = [];
+    files.forEach((f: File) => {
+      if (isAcceptedImageFile(f)) {
+        accepted.push(f);
+      } else {
+        rejected.push(f);
+      }
+    });
+    let newItems: BatchItem[] = [];
+    const previewed: { file: File; url: string }[] = [];
+    const previewFailed: File[] = [];
+    if (accepted.length) {
+      const previews = await Promise.allSettled(
+        accepted.map(async (f: File) => ({ file: f, url: await createImagePreviewUrl(f) }))
+      );
+      previews.forEach((res, idx) => {
+        if (res.status === 'fulfilled') {
+          previewed.push(res.value);
+        } else {
+          previewFailed.push(accepted[idx]);
+        }
+      });
+      newItems = previewed.map(({ file, url }) => ({
+        id: crypto.randomUUID(),
+        file,
+        url,
+        status: 'pending',
+        manualDetections: []
+      }));
+    }
+    if (previewFailed.length) {
+      rejected.push(...previewFailed);
+    }
+    if (rejected.length) {
+      const details = rejected
+        .map((f: File) => `${f.name}${f.type ? ` (${f.type})` : ''}`)
+        .join(', ');
+      setBatchError(`Some files were not added (unsupported type or failed to render preview): ${details}.`);
+    } else {
+      setBatchError(null);
+    }
     setBatchItems((prev: BatchItem[]) => {
       const next = [...prev, ...newItems];
       return next;
@@ -85,12 +128,13 @@ const CellCountingV8: React.FC = () => {
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    handleBatchFiles(files);
+    void handleBatchFiles(files);
     e.target.value = '';
   };
 
   const runBatch = useCallback(async () => {
     if (batchRunning || !batchItems.length) return;
+    setBatchError(null);
     setBatchRunning(true);
     let processed = 0;
     let firstShown = false;
@@ -120,7 +164,7 @@ const CellCountingV8: React.FC = () => {
   const removeBatchItem = (id: string) => {
     setBatchItems((items: BatchItem[]) => {
       const itemToRemove = items.find((i: BatchItem) => i.id === id);
-      if (itemToRemove) {
+      if (itemToRemove && shouldRevokeObjectUrl(itemToRemove.url)) {
         URL.revokeObjectURL(itemToRemove.url);
       }
       const next = items.filter((i: BatchItem) => i.id !== id);
@@ -139,7 +183,7 @@ const CellCountingV8: React.FC = () => {
     if (!ids.size) return;
     setBatchItems((items: BatchItem[]) => {
       items.forEach((i: BatchItem) => {
-        if (ids.has(i.id)) {
+        if (ids.has(i.id) && shouldRevokeObjectUrl(i.url)) {
           URL.revokeObjectURL(i.url);
         }
       });
@@ -193,7 +237,9 @@ const CellCountingV8: React.FC = () => {
   const clearBatch = () => {
     setBatchItems((items: BatchItem[]) => {
       items.forEach((i: BatchItem) => {
-        URL.revokeObjectURL(i.url);
+        if (shouldRevokeObjectUrl(i.url)) {
+          URL.revokeObjectURL(i.url);
+        }
       });
       return [];
     });
@@ -201,6 +247,7 @@ const CellCountingV8: React.FC = () => {
     setBatchProgress(0);
     setBatchRunning(false);
     setSelectedBatchIds(new Set());
+    setBatchError(null);
     if (uploadInputRef.current) uploadInputRef.current.value = '';
     if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
@@ -451,9 +498,9 @@ const CellCountingV8: React.FC = () => {
             ref={uploadInputRef}
             type="file"
             multiple
-            accept="image/*"
+            accept={ACCEPTED_IMAGE_ACCEPT_ATTR}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              handleBatchFiles(e.target.files);
+              void handleBatchFiles(e.target.files);
               e.target.value = '';
             }}
             className="hidden"
@@ -490,6 +537,19 @@ const CellCountingV8: React.FC = () => {
           <div className="text-[11px] text-gray-600">Progress: {batchProgress}/{batchItems.length}</div>
         )}
       </div>
+      {batchError && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <span>{batchError}</span>
+          <button
+            type="button"
+            onClick={() => setBatchError(null)}
+            className="rounded p-1 text-red-600 hover:bg-red-100"
+            aria-label="Dismiss filetype error"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
         <div className="space-y-4">

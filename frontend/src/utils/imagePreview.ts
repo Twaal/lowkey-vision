@@ -1,0 +1,40 @@
+import * as UTIF from 'utif';
+import { getFileExtension } from './fileTypes';
+
+const TIFF_EXTENSIONS = new Set(['.tif', '.tiff']);
+
+export const isTiffFile = (file: File): boolean => {
+  if (file.type === 'image/tiff') return true;
+  const ext = getFileExtension(file.name);
+  return TIFF_EXTENSIONS.has(ext);
+};
+
+export const createImagePreviewUrl = async (file: File): Promise<string> => {
+  if (!isTiffFile(file)) {
+    return URL.createObjectURL(file);
+  }
+
+  const buffer = await file.arrayBuffer();
+  const ifds = UTIF.decode(buffer);
+  if (!ifds.length) {
+    throw new Error('Unable to decode TIFF');
+  }
+  UTIF.decodeImage(buffer, ifds[0]);
+  const rgba = UTIF.toRGBA8(ifds[0]);
+  const width = ifds[0].width as number;
+  const height = ifds[0].height as number;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Unable to render TIFF');
+  }
+  const imageData = new ImageData(new Uint8ClampedArray(rgba), width, height);
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL('image/png');
+};
+
+export const shouldRevokeObjectUrl = (url: string | null): boolean => {
+  return !!url && url.startsWith('blob:');
+};

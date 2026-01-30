@@ -1,5 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, AlertCircle, RefreshCw } from 'lucide-react';
+import { ACCEPTED_IMAGE_ACCEPT_ATTR, isAcceptedImageFile } from '../utils/fileTypes';
+import { createImagePreviewUrl, shouldRevokeObjectUrl } from '../utils/imagePreview';
 
 interface ImageUploadProps {
   onAnalyze: (file: File) => Promise<void>;
@@ -21,34 +23,62 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
+
+  const setPreviewUrlSafe = (url: string | null) => {
+    if (shouldRevokeObjectUrl(previewUrlRef.current)) {
+      URL.revokeObjectURL(previewUrlRef.current!);
+    }
+    previewUrlRef.current = url;
+    setPreviewUrl(url);
+  };
+
+  const clearSelection = (options?: { reset?: boolean; clearError?: boolean }) => {
+    setSelectedFile(null);
+    setPreviewUrlSafe(null);
+    if (options?.clearError) {
+      setError(null);
+    }
+    if (options?.reset) {
+      onReset();
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const validateFile = (file: File): string | null => {
     const maxSize = 20 * 1024 * 1024;
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/tiff'];
 
     if (file.size > maxSize) {
       return 'File size must be less than 20MB';
     }
 
-    if (!allowedTypes.includes(file.type)) {
-      return 'Only JPEG, PNG, and TIFF files are supported';
+    if (!isAcceptedImageFile(file)) {
+      return 'Only image files are supported';
     }
 
     return null;
   };
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     const validationError = validateFile(file);
     if (validationError) {
       setError(validationError);
+      clearSelection({ reset: hasResult });
       return;
     }
 
     setError(null);
     setSelectedFile(file);
-    
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+
+    try {
+      const url = await createImagePreviewUrl(file);
+      setPreviewUrlSafe(url);
+    } catch (e: any) {
+      setError(e?.message || 'Unable to render image preview');
+      clearSelection({ reset: hasResult });
+    }
   };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -77,28 +107,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     if (!selectedFile) return;
     onAnalyze(selectedFile);
   };
 
   const handleReset = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setError(null);
-    onReset();
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    clearSelection({ reset: true, clearError: true });
   };
 
   const handleRemoveFile = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    clearSelection({ clearError: true });
   };
 
   return (
@@ -119,7 +138,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".jpg,.jpeg,.png,.tiff"
+            accept={ACCEPTED_IMAGE_ACCEPT_ATTR}
             onChange={handleInputChange}
             className="hidden"
           />
@@ -133,7 +152,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 Drop your image here, or click to browse
               </p>
               <p className="text-gray-500">
-                Supports JPEG, PNG, and TIFF files up to 20MB
+                Supports common image formats (JPEG, PNG, TIFF, BMP, and more) up to 20MB
               </p>
             </div>
           </div>
