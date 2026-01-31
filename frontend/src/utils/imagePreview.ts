@@ -4,19 +4,38 @@ import { getFileExtension } from './fileTypes';
 const TIFF_EXTENSIONS = new Set(['.tif', '.tiff']);
 const MAX_IMAGE_DIMENSION = 10000;
 
+// Security: Maximum file size for TIFF files (50MB)
+const MAX_TIFF_FILE_SIZE = 50 * 1024 * 1024;
+
+// Security: Maximum dimensions to prevent memory exhaustion
+const MAX_TIFF_DIMENSION = 16384; // 16K pixels per side
+
 export const isTiffFile = (file: File): boolean => {
   if (file.type && file.type.startsWith('image/tif')) return true;
   const ext = getFileExtension(file.name);
   return TIFF_EXTENSIONS.has(ext);
 };
 
-export const createImagePreviewUrl = async (file: File): Promise<string> => {
+export const createImagePreviewUrl = async (file: File, pageIndex: number = 0): Promise<string> => {
   if (!isTiffFile(file)) {
     return URL.createObjectURL(file);
   }
 
-  const buffer = await file.arrayBuffer();
-  const ifds = UTIF.decode(buffer);
+  // Security: Validate file size before decoding to prevent DoS
+  if (file.size > MAX_TIFF_FILE_SIZE) {
+    throw new Error(`TIFF file too large. Maximum size is ${MAX_TIFF_FILE_SIZE / 1024 / 1024}MB`);
+  }
+
+  let buffer: ArrayBuffer;
+  let ifds: UTIF.IFD[];
+  
+  try {
+    buffer = await file.arrayBuffer();
+    ifds = UTIF.decode(buffer);
+  } catch {
+    throw new Error('Invalid or corrupted TIFF file');
+  }
+
   if (!ifds.length) {
     throw new Error('Unable to decode TIFF');
   }
