@@ -15,7 +15,7 @@ export const isTiffFile = (file: File): boolean => {
   return TIFF_EXTENSIONS.has(ext);
 };
 
-export const createImagePreviewUrl = async (file: File): Promise<string> => {
+export const createImagePreviewUrl = async (file: File, pageIndex: number = 0): Promise<string> => {
   if (!isTiffFile(file)) {
     return URL.createObjectURL(file);
   }
