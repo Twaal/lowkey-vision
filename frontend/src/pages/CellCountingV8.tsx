@@ -106,7 +106,10 @@ const CellCountingV8: React.FC = () => {
     const previewFailed: File[] = [];
     if (accepted.length) {
       const previews = await Promise.allSettled(
-        accepted.map(async (f: File) => ({ file: f, url: await createImagePreviewUrl(f) }))
+        accepted.map(async (f: File) => {
+          const url = await createImagePreviewUrl(f);
+          return { file: f, url };
+        })
       );
       previews.forEach((res, idx) => {
         if (res.status === 'fulfilled') {

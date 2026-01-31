@@ -21,45 +21,53 @@ export const createImagePreviewUrl = async (file: File, pageIndex: number = 0): 
     return URL.createObjectURL(file);
   }
 
-  // Security: Validate file size before decoding to prevent DoS
-  if (file.size > MAX_TIFF_FILE_SIZE) {
-    throw new Error(`TIFF file too large. Maximum size is ${MAX_TIFF_FILE_SIZE / 1024 / 1024}MB`);
-  }
-
-  let buffer: ArrayBuffer;
-  let ifds: UTIF.IFD[];
-  
+  let canvas: HTMLCanvasElement | null = null;
+  let buffer: ArrayBuffer | null = null;
+  let rgba: ArrayBuffer | null = null;
   try {
     buffer = await file.arrayBuffer();
-    ifds = UTIF.decode(buffer);
-  } catch {
-    throw new Error('Invalid or corrupted TIFF file');
+    const ifds = UTIF.decode(buffer);
+    if (!ifds.length) {
+      throw new Error('Unable to decode TIFF');
+    }
+    UTIF.decodeImage(buffer, ifds[0]);
+    rgba = UTIF.toRGBA8(ifds[0]);
+    const rawWidth = (ifds[0] as { width?: unknown }).width;
+    const rawHeight = (ifds[0] as { height?: unknown }).height;
+    if (
+      typeof rawWidth !== 'number' ||
+      !Number.isFinite(rawWidth) ||
+      rawWidth <= 0 ||
+      typeof rawHeight !== 'number' ||
+      !Number.isFinite(rawHeight) ||
+      rawHeight <= 0
+    ) {
+      throw new Error('Invalid TIFF dimensions');
+    }
+    const width = rawWidth;
+    const height = rawHeight;
+    canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Unable to render TIFF');
+    }
+    const imageData = new ImageData(new Uint8ClampedArray(rgba), width, height);
+    ctx.putImageData(imageData, 0, 0);
+    const dataUrl = canvas.toDataURL('image/png');
+    return dataUrl;
+  } finally {
+    // Explicitly clear references to help garbage collection
+    // This is especially important for large TIFF files
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+      canvas = null;
+    }
+    buffer = null;
+    rgba = null;
   }
-
-  if (!ifds.length) {
-    throw new Error('Unable to decode TIFF');
-  }
-  
-  // Validate dimensions before expensive decode operations to prevent performance issues
-  const width = ifds[0].width as number;
-  const height = ifds[0].height as number;
-  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
-    throw new Error(`TIFF image dimensions (${width}x${height}) exceed maximum allowed size of ${MAX_IMAGE_DIMENSION}x${MAX_IMAGE_DIMENSION} pixels`);
-  }
-  
-  UTIF.decodeImage(buffer, ifds[0]);
-  const rgba = UTIF.toRGBA8(ifds[0]);
-  
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    throw new Error('Unable to render TIFF');
-  }
-  const imageData = new ImageData(new Uint8ClampedArray(rgba), width, height);
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.toDataURL('image/png');
 };
 
 export const shouldRevokeObjectUrl = (url: string | null): boolean => {
