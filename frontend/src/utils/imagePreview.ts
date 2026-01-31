@@ -2,6 +2,7 @@ import * as UTIF from 'utif';
 import { getFileExtension } from './fileTypes';
 
 const TIFF_EXTENSIONS = new Set(['.tif', '.tiff']);
+const MAX_IMAGE_DIMENSION = 10000;
 
 // Security: Maximum file size for TIFF files (50MB)
 const MAX_TIFF_FILE_SIZE = 50 * 1024 * 1024;
@@ -36,50 +37,29 @@ export const createImagePreviewUrl = async (file: File, pageIndex: number = 0): 
   }
 
   if (!ifds.length) {
-    throw new Error('Unable to decode TIFF: No image data found');
+    throw new Error('Unable to decode TIFF');
   }
-
-  const ifd = ifds[0];
-  const width = ifd.width as number;
-  const height = ifd.height as number;
-
-  // Security: Validate dimensions to prevent memory exhaustion
-  if (!width || !height || width <= 0 || height <= 0) {
-    throw new Error('Invalid TIFF dimensions');
+  
+  // Validate dimensions before expensive decode operations to prevent performance issues
+  const width = ifds[0].width as number;
+  const height = ifds[0].height as number;
+  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+    throw new Error(`TIFF image dimensions (${width}x${height}) exceed maximum allowed size of ${MAX_IMAGE_DIMENSION}x${MAX_IMAGE_DIMENSION} pixels`);
   }
-
-  if (width > MAX_TIFF_DIMENSION || height > MAX_TIFF_DIMENSION) {
-    throw new Error(`TIFF dimensions too large. Maximum dimension is ${MAX_TIFF_DIMENSION} pixels`);
+  
+  UTIF.decodeImage(buffer, ifds[0]);
+  const rgba = UTIF.toRGBA8(ifds[0]);
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('Unable to render TIFF');
   }
-
-  // Security: Additional check for total pixel count to prevent memory issues
-  const totalPixels = width * height;
-  const maxPixels = MAX_TIFF_DIMENSION * MAX_TIFF_DIMENSION;
-  if (totalPixels > maxPixels) {
-    throw new Error('TIFF image too large to process');
-  }
-
-  try {
-    UTIF.decodeImage(buffer, ifd);
-    const rgba = UTIF.toRGBA8(ifd);
-    
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Unable to create canvas context');
-    }
-    
-    const imageData = new ImageData(new Uint8ClampedArray(rgba), width, height);
-    ctx.putImageData(imageData, 0, 0);
-    return canvas.toDataURL('image/png');
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('Failed to process TIFF file');
-  }
+  const imageData = new ImageData(new Uint8ClampedArray(rgba), width, height);
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL('image/png');
 };
 
 export const shouldRevokeObjectUrl = (url: string | null): boolean => {
