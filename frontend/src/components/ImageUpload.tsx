@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon, AlertCircle, RefreshCw } from 'lucide-react';
 import { ACCEPTED_IMAGE_ACCEPT_ATTR, isAcceptedImageFile } from '../utils/fileTypes';
 import { createImagePreviewUrl, shouldRevokeObjectUrl } from '../utils/imagePreview';
@@ -24,6 +24,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (shouldRevokeObjectUrl(previewUrlRef.current)) {
+        URL.revokeObjectURL(previewUrlRef.current!);
+      }
+    };
+  }, []);
 
   const setPreviewUrlSafe = (url: string | null) => {
     if (shouldRevokeObjectUrl(previewUrlRef.current)) {
