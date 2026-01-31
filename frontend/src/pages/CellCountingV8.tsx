@@ -31,6 +31,7 @@ const CellCountingV8: React.FC = () => {
   const [batchProgress, setBatchProgress] = useState(0);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const batchItemsRef = useRef<BatchItem[]>([]);
   const currentBatchItem = batchItems[batchIndex];
   const SETTINGS_VERSION = 5;
   const rawStored = typeof window !== 'undefined' ? (() => {
@@ -62,9 +63,23 @@ const CellCountingV8: React.FC = () => {
   const [batchError, setBatchError] = useState<string | null>(null);
 
   useEffect(() => {
+    batchItemsRef.current = batchItems;
+  }, [batchItems]);
+
+  useEffect(() => {
     const toStore = { version: SETTINGS_VERSION, showLabels, minScore, strokeWidth, minArea, iouThreshold };
     try { localStorage.setItem('cellCountingSettingsV8', JSON.stringify(toStore)); } catch {}
   }, [showLabels, minScore, strokeWidth, minArea, iouThreshold]);
+
+  useEffect(() => {
+    return () => {
+      batchItemsRef.current.forEach((item) => {
+        if (shouldRevokeObjectUrl(item.url)) {
+          URL.revokeObjectURL(item.url);
+        }
+      });
+    };
+  }, []);
 
   const toggleClass = (name: string) => {
     setSelectedClasses((prev: Set<string>) => {
