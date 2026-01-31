@@ -2,6 +2,13 @@ import * as UTIF from 'utif';
 import { getFileExtension } from './fileTypes';
 
 const TIFF_EXTENSIONS = new Set(['.tif', '.tiff']);
+const MAX_IMAGE_DIMENSION = 10000;
+
+// Security: Maximum file size for TIFF files (50MB)
+const MAX_TIFF_FILE_SIZE = 50 * 1024 * 1024;
+
+// Security: Maximum dimensions to prevent memory exhaustion
+const MAX_TIFF_DIMENSION = 16384; // 16K pixels per side
 
 export const isTiffFile = (file: File): boolean => {
   if (file.type && file.type.startsWith('image/tif')) return true;
@@ -9,7 +16,7 @@ export const isTiffFile = (file: File): boolean => {
   return TIFF_EXTENSIONS.has(ext);
 };
 
-export const createImagePreviewUrl = async (file: File): Promise<string> => {
+export const createImagePreviewUrl = async (file: File, pageIndex: number = 0): Promise<string> => {
   if (!isTiffFile(file)) {
     return URL.createObjectURL(file);
   }

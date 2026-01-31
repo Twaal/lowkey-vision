@@ -31,6 +31,7 @@ const CellCountingV8: React.FC = () => {
   const [batchProgress, setBatchProgress] = useState(0);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const batchItemsRef = useRef<BatchItem[]>([]);
   const currentBatchItem = batchItems[batchIndex];
   const SETTINGS_VERSION = 5;
   const rawStored = typeof window !== 'undefined' ? (() => {
@@ -62,9 +63,23 @@ const CellCountingV8: React.FC = () => {
   const [batchError, setBatchError] = useState<string | null>(null);
 
   useEffect(() => {
+    batchItemsRef.current = batchItems;
+  }, [batchItems]);
+
+  useEffect(() => {
     const toStore = { version: SETTINGS_VERSION, showLabels, minScore, strokeWidth, minArea, iouThreshold };
     try { localStorage.setItem('cellCountingSettingsV8', JSON.stringify(toStore)); } catch {}
   }, [showLabels, minScore, strokeWidth, minArea, iouThreshold]);
+
+  useEffect(() => {
+    return () => {
+      batchItemsRef.current.forEach((item) => {
+        if (shouldRevokeObjectUrl(item.url)) {
+          URL.revokeObjectURL(item.url);
+        }
+      });
+    };
+  }, []);
 
   const toggleClass = (name: string) => {
     setSelectedClasses((prev: Set<string>) => {
@@ -78,12 +93,12 @@ const CellCountingV8: React.FC = () => {
     if (!fileList) return;
     const files = Array.from(fileList);
     const accepted: File[] = [];
-    const rejected: File[] = [];
+    const rejectedUnsupported: File[] = [];
     files.forEach((f: File) => {
       if (isAcceptedImageFile(f)) {
         accepted.push(f);
       } else {
-        rejected.push(f);
+        rejectedUnsupported.push(f);
       }
     });
     let newItems: BatchItem[] = [];
@@ -111,14 +126,25 @@ const CellCountingV8: React.FC = () => {
         manualDetections: []
       }));
     }
-    if (previewFailed.length) {
-      rejected.push(...previewFailed);
-    }
-    if (rejected.length) {
-      const details = rejected
+    
+    const errorMessages: string[] = [];
+    if (rejectedUnsupported.length) {
+      const details = rejectedUnsupported
         .map((f: File) => `${f.name}${f.type ? ` (${f.type})` : ''}`)
         .join(', ');
-      setBatchError(`Some files were not added (unsupported type or failed to render preview): ${details}.`);
+      const count = rejectedUnsupported.length;
+      errorMessages.push(`${count} ${count === 1 ? 'file' : 'files'} rejected due to unsupported type: ${details}`);
+    }
+    if (previewFailed.length) {
+      const details = previewFailed
+        .map((f: File) => `${f.name}${f.type ? ` (${f.type})` : ''}`)
+        .join(', ');
+      const count = previewFailed.length;
+      errorMessages.push(`${count} ${count === 1 ? 'file' : 'files'} failed to render preview: ${details}`);
+    }
+    
+    if (errorMessages.length) {
+      setBatchError(errorMessages.join('. ') + '.');
     } else {
       setBatchError(null);
     }
